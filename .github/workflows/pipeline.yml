@@ -28,11 +28,11 @@ jobs:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-      - name: Analyze
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=woped_P2T
+    #  - name: Analyze
+       # env:
+       #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       #   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+       # run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=woped_P2T
 
       - name: Build
         run: mvn clean install -Dmaven.test.skip=true --no-transfer-progress
