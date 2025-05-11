@@ -55,7 +55,8 @@ public class P2TController {
    */
   @ApiOperation(
       value =
-          "Translate a process model into human readable text using one of OpenAIs Large Language Models")
+          "Translate a process model into human readable text using one of OpenAIs Large Language"
+              + " Models")
   @PostMapping(value = "/generateTextLLM", consumes = "text/plain", produces = "text/plain")
   protected String generateTextLLM(
       @RequestBody String body,

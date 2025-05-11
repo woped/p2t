@@ -1,18 +1,39 @@
 package de.dhbw.woped.process2text.model.process;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
 /** Data Transfer Object to hold OpenAI API related information. */
-@Data
-@Setter
-@Getter
-@AllArgsConstructor
 public class OpenAiApiDTO {
+
+  public OpenAiApiDTO(String apiKey, String gptModel, String prompt) {
+    this.apiKey = apiKey;
+    this.gptModel = gptModel;
+    this.prompt = prompt;
+  }
 
   private String apiKey;
   private String gptModel;
   private String prompt;
+
+  public String getApiKey() {
+    return apiKey;
+  }
+
+  public String getGptModel() {
+    return gptModel;
+  }
+
+  public String getPrompt() {
+    return prompt;
+  }
+
+  public void setGptModel(String gptModel) {
+    this.gptModel = gptModel;
+  }
+
+  public void setApiKey(String apiKey) {
+    this.apiKey = apiKey;
+  }
+
+  public void setPrompt(String prompt) {
+    this.prompt = prompt;
+  }
 }
