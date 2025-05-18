@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LM Studio</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>LM Studio Chat Interface</h1>
+    <form id="chatForm">
+        <label for="system_message">System Message:</label>
+        <input type="text" id="system_message" name="system_message" value="Always answer in rhymes">
+        <br><br>
+        <label for="message">User Message:</label>
+        <input type="text" id="message" name="message">
+        <br><br>
+        <button type="submit">Send</button>
+    </form>
+    
+    <div id="status" style="margin-top: 20px; font-weight: bold;"></div>
+    <div id="response" style="margin-top: 20px;"></div>
+
+    <script>
+        $(document).ready(function() {
+            $("#chatForm").on("submit", function(e) {
+                e.preventDefault();
+                
+                // Zeige den ersten Status an
+                $("#status").text("Connecting to the model...");
+
+                // Sammle die Formulardaten
+                var formData = {
+                    message: $("#message").val(),
+                    system_message: $("#system_message").val()
+                };
+
+                // Simuliere Schritte des Fortschritts
+                setTimeout(function() {
+                    $("#status").text("Model generating response...");
+                }, 1000);
+
+                // Sende die Anfrage an den Server
+                $.ajax({
+                    url: "/send",
+                    type: "POST",
+                    data: formData,
+                    success: function(response) {
+                        // Zeige die Antwort des Modells und die Ladezeit an
+                        $("#status").text("Response received.");
+                        $("#response").html("<b>Response:</b> " + response.response + "<br><b>Time taken:</b> " + response.response_time.toFixed(2) + " seconds");
+                    },
+                    error: function() {
+                        $("#status").text("Error occurred.");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
