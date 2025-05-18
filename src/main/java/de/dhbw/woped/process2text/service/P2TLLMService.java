@@ -82,6 +82,42 @@ public class P2TLLMService {
     }
   }
 
+  public String callLLM2(String body, OpenAiApiDTO dto) {
+    // Use the Transformer API if the provided processmodell is a PNML to parse it
+    // into an BPMN
+    TransformerService transformerService = new TransformerService();
+    if ("PNML".equals(transformerService.checkForBPMNorPNML(body))) {
+      body = transformerService.transform("pnmltobpmn", body);
+    }
+
+    // Get Provider
+    String provider = dto.getProvider() != null ? dto.getProvider().toLowerCase() : "openai";
+
+    if (provider.equals("openai")) {
+      return callOpenAi(body, dto);
+
+    } else if (provider.equals("gemini")) {
+      return callGemini(body, dto);
+    } else if (provider.equals("llmStudio")) {
+      return callLlmStudio(body, dto);
+    }
+  }
+
+  private String callOpenAi(String body, OpenAiApiDTO dto) {
+
+    return "";
+  }
+
+  private String callGemini(String body, OpenAiApiDTO dto) {
+
+    return "";
+  }
+
+  private String callLlmStudio(String body, OpenAiApiDTO dto) {
+
+    return "";
+  }
+
   /**
    * Retrieves the list of available GPT models from the OpenAI API.
    *
