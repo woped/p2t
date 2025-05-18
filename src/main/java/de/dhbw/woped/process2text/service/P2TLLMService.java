@@ -104,16 +104,37 @@ public class P2TLLMService {
     }
   }
 
+  /*
+   * Creates the API Call for the OpenAI API with the provided text and API details.
+   *
+   * @param body The text to be sent to the OpenAI API.
+   * @param openAiApiDTO Contains the API key, GPT model, and prompt.
+   * @return the api call for Open Ai.
+   */
   private String createCallOpenAi(String body, OpenAiApiDTO dto) {
 
     return "";
   }
 
+  /*
+   * Creates the API Call for the Gemini API with the provided text and API details.
+   *
+   * @param body The text to be sent to the Gemini API.
+   * @param openAiApiDTO Contains the API key, Gemini model, and prompt.
+   * @return the api call for Gemini.
+   */
   private String createCallGemini(String body, OpenAiApiDTO dto) {
 
     return "";
   }
 
+  /*
+   * Creates the API Call for the LlmStudio API with the provided text and API details.
+   *
+   * @param body The text to be sent to the LlmStudio API.
+   * @param openAiApiDTO Contains the API key, GPT model, and prompt.
+   * @return the api call for LlmStudio.
+   */
   private String createCallLlmStudio(String body, OpenAiApiDTO dto) {
 
     return "";
