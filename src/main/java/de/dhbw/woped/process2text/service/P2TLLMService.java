@@ -93,27 +93,28 @@ public class P2TLLMService {
     // Get Provider
     String provider = dto.getProvider() != null ? dto.getProvider().toLowerCase() : "openai";
 
-    if (provider.equals("openai")) {
-      return callOpenAi(body, dto);
+    // Call provider
 
+    if (provider.equals("openai")) {
+      return createCallOpenAi(body, dto);
     } else if (provider.equals("gemini")) {
-      return callGemini(body, dto);
+      return createCallGemini(body, dto);
     } else if (provider.equals("llmStudio")) {
-      return callLlmStudio(body, dto);
+      return createCallLlmStudio(body, dto);
     }
   }
 
-  private String callOpenAi(String body, OpenAiApiDTO dto) {
+  private String createCallOpenAi(String body, OpenAiApiDTO dto) {
 
     return "";
   }
 
-  private String callGemini(String body, OpenAiApiDTO dto) {
+  private String createCallGemini(String body, OpenAiApiDTO dto) {
 
     return "";
   }
 
-  private String callLlmStudio(String body, OpenAiApiDTO dto) {
+  private String createCallLlmStudio(String body, OpenAiApiDTO dto) {
 
     return "";
   }
