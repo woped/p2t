@@ -91,18 +91,25 @@ public class P2TLLMService {
     }
 
     // Get Provider
-    String provider = dto.getProvider();
+    String provider = ""; // = dto.getProvider();
 
     // Call provider
-
+    String apiCallString;
     if (provider.equals("openai")) {
-      return createCallOpenAi(body, dto);
+      apiCallString = createCallOpenAi(body, dto);
     } else if (provider.equals("gemini")) {
-      return createCallGemini(body, dto);
+      apiCallString = createCallGemini(body, dto);
     } else if (provider.equals("llmStudio")) {
-      return createCallLlmStudio(body, dto);
+      apiCallString = createCallLlmStudio(body, dto);
     }
+
+    return callAPI(provider);
   }
+
+  private String callAPI(String apiCallString) {
+    return "";
+  }
+  ;
 
   /*
    * Creates the API Call for the OpenAI API with the provided text and API details.
