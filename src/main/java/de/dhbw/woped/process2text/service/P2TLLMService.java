@@ -94,7 +94,7 @@ public class P2TLLMService {
     String provider = ""; // = dto.getProvider();
 
     // Call provider
-    String apiCallString;
+    String apiCallString = "";
     if (provider.equals("openai")) {
       apiCallString = createCallOpenAi(body, dto);
     } else if (provider.equals("gemini")) {
@@ -103,7 +103,7 @@ public class P2TLLMService {
       apiCallString = createCallLlmStudio(body, dto);
     }
 
-    return callAPI(provider);
+    return callAPI(apiCallString);
   }
 
   private String callAPI(String apiCallString) {
