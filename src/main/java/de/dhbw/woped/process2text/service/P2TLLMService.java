@@ -91,7 +91,7 @@ public class P2TLLMService {
     }
 
     // Get Provider
-    String provider = dto.getProvider() != null ? dto.getProvider().toLowerCase() : "openai";
+    String provider = dto.getProvider();
 
     // Call provider
 
