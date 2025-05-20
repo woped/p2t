@@ -7,7 +7,6 @@ import com.openai.models.ChatCompletionCreateParams;
 import com.openai.models.ChatModel;
 import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,7 +19,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -45,28 +43,24 @@ public class P2TLLMService {
    */
   public String callLLM(String body, OpenAiApiDTO openAiApiDTO) {
     OpenAIClient = OpenAIOkHttpClient.builder().apiKey(openAiApiDTO.getApiKey()).build();
-      
-    List<ChatCompletionMessage> messages = List.of(
-    ChatCompletionMessage.systemMessage("You are a helpful assistant."),
-    ChatCompletionMessage.userMessage(openAiApiDTO.getPrompt()),
-    ChatCompletionMessage.userMessage(body)  
-    );
 
-    ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
-        .messages(messages)
-        .model(openAiApiDTO.getGptModel())
-        .maxTokens(4096)
-        .temperature(0.7)
-        .build();
+    List<ChatCompletionMessage> messages =
+        List.of(
+            ChatCompletionMessage.systemMessage("You are a helpful assistant."),
+            ChatCompletionMessage.userMessage(openAiApiDTO.getPrompt()),
+            ChatCompletionMessage.userMessage(body));
+
+    ChatCompletionCreateParams params =
+        ChatCompletionCreateParams.builder()
+            .messages(messages)
+            .model(openAiApiDTO.getGptModel())
+            .maxTokens(4096)
+            .temperature(0.7)
+            .build();
 
     ChatCompletion chatCompletion = client.chat().completions().create(params);
     String response = chatCompletion.choices().get(0).message().content().get();
     return extractContentFromResponse(response);
-
-
-
-
-
 
     // String apiUrl = "https://api.openai.com/v1/chat/completions";
     // // Use the Transformer API if the provided processmodell is a PNML to parse it
