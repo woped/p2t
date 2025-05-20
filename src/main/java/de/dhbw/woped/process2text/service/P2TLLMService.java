@@ -1,5 +1,10 @@
 package de.dhbw.woped.process2text.service;
 
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.ChatCompletion;
+import com.openai.models.ChatCompletionCreateParams;
+import com.openai.models.ChatModel;
 import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.HashMap;
@@ -119,8 +124,16 @@ public class P2TLLMService {
    * @return the api call for Open Ai.
    */
   private String createCallOpenAi(String body, OpenAiApiDTO dto) {
-    // Test Push
-    return "";
+    OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+    ChatCompletionCreateParams params =
+        ChatCompletionCreateParams.builder()
+            .addUserMessage("Say this is a test")
+            .model(ChatModel.O3_MINI)
+            .build();
+    ChatCompletion chatCompletion = client.chat().completions().create(params);
+    String output = chatCompletion.choices().get(0).message().content().get();
+
+    return output;
   }
 
   /*
