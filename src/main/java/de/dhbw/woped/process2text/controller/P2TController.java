@@ -3,7 +3,6 @@ package de.dhbw.woped.process2text.controller;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import de.dhbw.woped.process2text.service.P2TLLMService;
 import de.dhbw.woped.process2text.service.P2TService;
-import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -32,7 +31,6 @@ public class P2TController {
    * @param body The process model in plain text format.
    * @return The translated text.
    */
-  @ApiOperation(value = "Translate a process model into human readable text.")
   @PostMapping(value = "/generateText", consumes = "text/plain", produces = "text/plain")
   protected String generateText(@RequestBody String body) {
     if (logger.isDebugEnabled()) {
@@ -53,9 +51,6 @@ public class P2TController {
    * @param gptModel The GPT model to be used for translation.
    * @return The translated text.
    */
-  @ApiOperation(
-      value =
-          "Translate a process model into human readable text using one of OpenAIs Large Language Models")
   @PostMapping(value = "/generateTextLLM", consumes = "text/plain", produces = "text/plain")
   protected String generateTextLLM(
       @RequestBody String body,
