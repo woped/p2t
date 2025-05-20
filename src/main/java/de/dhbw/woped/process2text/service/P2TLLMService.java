@@ -1,12 +1,16 @@
 package de.dhbw.woped.process2text.service;
 
-import com.openai.client.OpenAIClient;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.models.ChatCompletion;
-import com.openai.models.ChatCompletionCreateParams;
-import com.openai.models.ChatModel;
+import com.azure.ai.openai.OpenAIClient;
+import com.azure.ai.openai.OpenAIClientBuilder;
+import com.azure.ai.openai.models.ChatCompletions;
+import com.azure.ai.openai.models.ChatCompletionsOptions;
+import com.azure.ai.openai.models.ChatRequestMessage;
+import com.azure.ai.openai.models.ChatRequestSystemMessage;
+import com.azure.ai.openai.models.ChatRequestUserMessage;
+import com.azure.core.credential.KeyCredential;
 import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,24 +46,24 @@ public class P2TLLMService {
    * @return The content of the response from the OpenAI API.
    */
   public String callLLM(String body, OpenAiApiDTO openAiApiDTO) {
-    OpenAIClient = OpenAIOkHttpClient.builder().apiKey(openAiApiDTO.getApiKey()).build();
+    OpenAIClient client =
+        new OpenAIClientBuilder()
+            .credential(new KeyCredential(openAiApiDTO.getApiKey()))
+            .buildClient();
 
-    List<ChatCompletionMessage> messages =
-        List.of(
-            ChatCompletionMessage.systemMessage("You are a helpful assistant."),
-            ChatCompletionMessage.userMessage(openAiApiDTO.getPrompt()),
-            ChatCompletionMessage.userMessage(body));
+    List<ChatRequestMessage> chatMessages = new ArrayList<>();
+    chatMessages.add(new ChatRequestSystemMessage("You are a helpful assistant."));
+    chatMessages.add(new ChatRequestUserMessage(openAiApiDTO.getPrompt()));
+    chatMessages.add(new ChatRequestUserMessage(body));
 
-    ChatCompletionCreateParams params =
-        ChatCompletionCreateParams.builder()
-            .messages(messages)
-            .model(openAiApiDTO.getGptModel())
-            .maxTokens(4096)
-            .temperature(0.7)
-            .build();
+    ChatCompletionsOptions options =
+        new ChatCompletionsOptions(chatMessages).setMaxTokens(4096).setTemperature(0.7);
 
-    ChatCompletion chatCompletion = client.chat().completions().create(params);
-    String response = chatCompletion.choices().get(0).message().content().get();
+    ChatCompletions chatCompletions =
+        client.getChatCompletions(openAiApiDTO.getGptModel(), options);
+
+    String response = chatCompletions.getChoices().get(0).getMessage().getContent();
+
     return extractContentFromResponse(response);
 
     // String apiUrl = "https://api.openai.com/v1/chat/completions";
@@ -142,16 +146,7 @@ public class P2TLLMService {
    * @return the api call for Open Ai.
    */
   private String createCallOpenAi(String body, OpenAiApiDTO dto) {
-    OpenAIClient client = OpenAIOkHttpClient.fromEnv();
-    ChatCompletionCreateParams params =
-        ChatCompletionCreateParams.builder()
-            .addUserMessage("Say this is a test")
-            .model(ChatModel.O3_MINI)
-            .build();
-    ChatCompletion chatCompletion = client.chat().completions().create(params);
-    String output = chatCompletion.choices().get(0).message().content().get();
-
-    return output;
+    return "";
   }
 
   /*
