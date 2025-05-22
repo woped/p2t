@@ -8,6 +8,8 @@ import com.azure.ai.openai.models.ChatRequestMessage;
 import com.azure.ai.openai.models.ChatRequestSystemMessage;
 import com.azure.ai.openai.models.ChatRequestUserMessage;
 import com.azure.core.credential.KeyCredential;
+import com.google.genai.Client;
+import com.google.genai.types.GenerateContentConfig;
 import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.ArrayList;
@@ -167,7 +169,9 @@ public class P2TLLMService {
    * @return the api call for Gemini.
    */
   private String createCallGemini(String body, OpenAiApiDTO dto) {
-
+    Client clientGemini = Client.builder().apiKey(dto.getApiKey()).build();
+    GenerateContentConfig config =
+        GenerateContentConfig.builder().temperature((float) 0.7).maxOutputTokens(4096).build();
     return "";
   }
 

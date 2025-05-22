@@ -8,6 +8,11 @@ import com.azure.ai.openai.models.ChatRequestMessage;
 import com.azure.ai.openai.models.ChatRequestSystemMessage;
 import com.azure.ai.openai.models.ChatRequestUserMessage;
 import com.azure.core.credential.KeyCredential;
+import com.google.genai.Client;
+import com.google.genai.types.Content;
+import com.google.genai.types.GenerateContentConfig;
+import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.Part;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +24,9 @@ public class TestLLM {
     // System.out.println(callLLM("Count from 1 to 10, just list the numbers, nothing else.",
     // testDTO));
 
-    OpenAiApiDTO testDTOGemini = new OpenAiApiDTO("", "gemini-1.5-pro", "Count from 1 to 10");
+    OpenAiApiDTO testDTOGemini =
+        new OpenAiApiDTO(
+            "AIzaSyBYm0RnSVWvM2hMs55iuL-J2IXy2gcD6jg", "gemini-1.5-pro", "Count from 1 to 10");
     System.out.println(
         callLLMGemini("Count from 1 to 10, just list the numbers, nothing else.", testDTOGemini));
   }
@@ -56,30 +63,26 @@ public class TestLLM {
   public static String callLLMGemini(String body, OpenAiApiDTO openAiApiDTO) {
     System.out.println("Versuche Verbindung mit API-Key: " + openAiApiDTO.getApiKey());
 
-    OpenAIClient client =
-        new OpenAIClientBuilder()
-            .endpoint("https://generativelanguage.googleapis.com/v1/")
-            .credential(new KeyCredential(openAiApiDTO.getApiKey()))
-            .buildClient();
+    Client client = Client.builder().apiKey(openAiApiDTO.getApiKey()).build();
+    GenerateContentConfig config =
+        GenerateContentConfig.builder().temperature((float) 0.7).maxOutputTokens(4096).build();
 
-    System.out.println("Client erstellt, sende Anfrage...");
+    List<Content> chatMessages = new ArrayList<>();
+    chatMessages.add(
+        Content.builder()
+            .role("model")
+            .parts(List.of(Part.fromText("You are a helpful assistant.")))
+            .build());
+    chatMessages.add(
+        Content.builder()
+            .role("user")
+            .parts(List.of(Part.fromText(openAiApiDTO.getPrompt() + body)))
+            .build());
 
-    List<ChatRequestMessage> chatMessages = new ArrayList<>();
-    chatMessages.add(new ChatRequestSystemMessage("You are a helpful assistant."));
-    chatMessages.add(new ChatRequestUserMessage(openAiApiDTO.getPrompt()));
-    chatMessages.add(new ChatRequestUserMessage(body));
+    GenerateContentResponse response =
+        client.models.generateContent(openAiApiDTO.getGptModel(), chatMessages, config);
+    System.out.println(response.text());
 
-    ChatCompletionsOptions options =
-        new ChatCompletionsOptions(chatMessages).setMaxTokens(4096).setTemperature(0.7);
-
-    try {
-      ChatCompletions chatCompletions =
-          client.getChatCompletions(openAiApiDTO.getGptModel(), options);
-      String response = chatCompletions.getChoices().get(0).getMessage().getContent();
-      return response;
-    } catch (Exception e) {
-      System.err.println("Fehler beim API-Aufruf: " + e.getMessage());
-      return "Fehler: " + e.getMessage();
-    }
+    return "";
   }
 }
