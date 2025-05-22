@@ -53,8 +53,8 @@ public class P2TLLMService {
 
     List<ChatRequestMessage> chatMessages = new ArrayList<>();
     chatMessages.add(new ChatRequestSystemMessage("You are a helpful assistant."));
-    chatMessages.add(new ChatRequestUserMessage(openAiApiDTO.getPrompt()));
-    chatMessages.add(new ChatRequestUserMessage(body));
+    chatMessages.add(new ChatRequestUserMessage(openAiApiDTO.getPrompt() + body));
+    // chatMessages.add(new ChatRequestUserMessage(body));
 
     ChatCompletionsOptions options =
         new ChatCompletionsOptions(chatMessages).setMaxTokens(4096).setTemperature(0.7);
@@ -64,7 +64,9 @@ public class P2TLLMService {
 
     String response = chatCompletions.getChoices().get(0).getMessage().getContent();
 
-    return extractContentFromResponse(response);
+    logger.info("Raw OpenAI API response: {}", response);
+
+    return response;
 
     // String apiUrl = "https://api.openai.com/v1/chat/completions";
     // // Use the Transformer API if the provided processmodell is a PNML to parse it
