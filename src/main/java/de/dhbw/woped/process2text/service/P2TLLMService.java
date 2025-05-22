@@ -46,6 +46,15 @@ public class P2TLLMService {
    * @return The content of the response from the OpenAI API.
    */
   public String callLLM(String body, OpenAiApiDTO openAiApiDTO) {
+
+    // Use the Transformer API if the provided processmodell is a PNML to parse it
+    // into an BPMN
+    TransformerService transformerService = new TransformerService();
+    if (transformerService.checkForBPMNorPNML(body).equals("PNML")) {
+      body = transformerService.transform("pnmltobpmn", body);
+    }
+
+
     OpenAIClient client =
         new OpenAIClientBuilder()
             .credential(new KeyCredential(openAiApiDTO.getApiKey()))
@@ -62,11 +71,13 @@ public class P2TLLMService {
     ChatCompletions chatCompletions =
         client.getChatCompletions(openAiApiDTO.getGptModel(), options);
 
-    String response = chatCompletions.getChoices().get(0).getMessage().getContent();
 
+    String response = chatCompletions.getChoices().get(0).getMessage().getContent();
+    
     logger.info("Raw OpenAI API response: {}", response);
 
     return response;
+    }
 
     // String apiUrl = "https://api.openai.com/v1/chat/completions";
     // // Use the Transformer API if the provided processmodell is a PNML to parse it
@@ -109,7 +120,6 @@ public class P2TLLMService {
     //   throw new ResponseStatusException(
     //       HttpStatus.INTERNAL_SERVER_ERROR, "Error calling OpenAI API", e);
     // }
-  }
 
   public String callLLM2(String body, OpenAiApiDTO dto) {
     // Use the Transformer API if the provided processmodell is a PNML to parse it
@@ -215,24 +225,24 @@ public class P2TLLMService {
    * @param response The raw JSON response from the OpenAI API.
    * @return The extracted content from the response.
    */
-  private String extractContentFromResponse(String response) {
-    try {
-      // Assuming the response is a JSON string, parse it
-      JSONObject jsonResponse = new JSONObject(response);
-      JSONArray choices = jsonResponse.getJSONArray("choices");
-      if (choices.length() > 0) {
-        // Get the first choice and extract the message content
-        JSONObject firstChoice = choices.getJSONObject(0);
-        JSONObject message = firstChoice.getJSONObject("message");
-        return message.getString("content");
-      } else {
-        throw new ResponseStatusException(
-            HttpStatus.INTERNAL_SERVER_ERROR, "No choices found in the response");
-      }
-    } catch (JSONException e) {
-      logger.error("Error parsing OpenAI API response", e);
-      throw new ResponseStatusException(
-          HttpStatus.INTERNAL_SERVER_ERROR, "Error parsing OpenAI API response", e);
-    }
-  }
+//   private String extractContentFromResponse(String response) {
+//     try {
+//       // Assuming the response is a JSON string, parse it
+//       JSONObject jsonResponse = new JSONObject(response);
+//       JSONArray choices = jsonResponse.getJSONArray("choices");
+//       if (choices.length() > 0) {
+//         // Get the first choice and extract the message content
+//         JSONObject firstChoice = choices.getJSONObject(0);
+//         JSONObject message = firstChoice.getJSONObject("message");
+//         return message.getString("content");
+//       } else {
+//         throw new ResponseStatusException(
+//             HttpStatus.INTERNAL_SERVER_ERROR, "No choices found in the response");
+//       }
+//     } catch (JSONException e) {
+//       logger.error("Error parsing OpenAI API response", e);
+//       throw new ResponseStatusException(
+//           HttpStatus.INTERNAL_SERVER_ERROR, "Error parsing OpenAI API response", e);
+//     }
+//   }
 }
