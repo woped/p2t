@@ -24,9 +24,7 @@ public class TestLLM {
     // System.out.println(callLLM("Count from 1 to 10, just list the numbers, nothing else.",
     // testDTO));
 
-    OpenAiApiDTO testDTOGemini =
-        new OpenAiApiDTO(
-            "AIzaSyBYm0RnSVWvM2hMs55iuL-J2IXy2gcD6jg", "gemini-1.5-pro", "Count from 1 to 10");
+    OpenAiApiDTO testDTOGemini = new OpenAiApiDTO("", "gemini-1.5-pro", "Count from 1 to 10");
     System.out.println(
         callLLMGemini("Count from 1 to 10, just list the numbers, nothing else.", testDTOGemini));
   }
