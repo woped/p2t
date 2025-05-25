@@ -25,8 +25,11 @@ public class TestLLM {
     // testDTO));
 
     OpenAiApiDTO testDTOGemini = new OpenAiApiDTO("", "gemini-1.5-pro", "Count from 1 to 10");
-    System.out.println(
-        callLLMGemini("Count from 1 to 10, just list the numbers, nothing else.", testDTOGemini));
+    // System.out.println(callLLMGemini("Count from 1 to 10, just list the numbers, nothing else.",
+    // testDTOGemini));
+
+    System.out.println(getGptModels(testDTO.getApiKey()));
+    System.out.println(getGeminiModels(testDTOGemini.getApiKey()));
   }
 
   public static String callLLM(String body, OpenAiApiDTO openAiApiDTO) {
@@ -82,5 +85,20 @@ public class TestLLM {
     System.out.println(response.text());
 
     return "";
+  }
+
+  public static List<String> getGptModels(String apiKey) {
+
+    OpenAIClient client =
+        new OpenAIClientBuilder().credential(new KeyCredential(apiKey)).buildClient();
+
+    return client.getModels();
+  }
+
+  public static List<String> getGeminiModels(String apiKey) {
+
+    Client client = Client.builder().apiKey(apiKey).build();
+
+    return client.listModels();
   }
 }
