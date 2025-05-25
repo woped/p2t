@@ -9,22 +9,24 @@ import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
+import com.openai.models.models.Model;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TestLLM {
 
   public static void main(String[] args) {
     OpenAiApiDTO testDTO = new OpenAiApiDTO("", "gpt-3.5-turbo", "Count from 1 to 10");
-    System.out.println(
-        callLLM("Count from 1 to 10, just list the numbers, nothing else.", testDTO));
+    // System.out.println(
+    // callLLM("Count from 1 to 10, just list the numbers, nothing else.", testDTO));
 
     OpenAiApiDTO testDTOGemini = new OpenAiApiDTO("", "gemini-1.5-pro", "Count from 1 to 10");
     // System.out.println(callLLMGemini("Count from 1 to 10, just list the numbers, nothing else.",
     // testDTOGemini));
 
-    // System.out.println(getGptModels(testDTO.getApiKey()));
+    System.out.println(getGptModels(testDTO.getApiKey()));
     // System.out.println(getGeminiModels(testDTOGemini.getApiKey()));
   }
 
@@ -82,14 +84,12 @@ public class TestLLM {
     return "";
   }
 
-  // public static List<String> getGptModels(String apiKey) {
+  public static List<String> getGptModels(String apiKey) {
+    OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(apiKey).build();
 
-  //   OpenAIClient client =
-  //       new OpenAIClientBuilder().credential(new KeyCredential(apiKey)).buildClient();
-
-  //   return client.getModels();
-  // }
-
+    List<Model> models = client.models().list().items();
+    return models.stream().map(Model::id).collect(Collectors.toList());
+  }
   // public static List<String> getGeminiModels(String apiKey) {
 
   //   Client client = Client.builder().apiKey(apiKey).build();
