@@ -9,7 +9,10 @@ import com.azure.ai.openai.models.ChatRequestSystemMessage;
 import com.azure.ai.openai.models.ChatRequestUserMessage;
 import com.azure.core.credential.KeyCredential;
 import com.google.genai.Client;
+import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
+import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.Part;
 import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.ArrayList;
@@ -158,7 +161,24 @@ public class P2TLLMService {
    * @return the api call for Open Ai.
    */
   private String createCallOpenAi(String body, OpenAiApiDTO dto) {
-    return "";
+    OpenAIClient client =
+        new OpenAIClientBuilder().credential(new KeyCredential(dto.getApiKey())).buildClient();
+
+    List<ChatRequestMessage> chatMessages = new ArrayList<>();
+    chatMessages.add(new ChatRequestSystemMessage("You are a helpful assistant."));
+    chatMessages.add(new ChatRequestUserMessage(dto.getPrompt() + body));
+    // chatMessages.add(new ChatRequestUserMessage(body));
+
+    ChatCompletionsOptions options =
+        new ChatCompletionsOptions(chatMessages).setMaxTokens(4096).setTemperature(0.7);
+
+    ChatCompletions chatCompletions = client.getChatCompletions(dto.getGptModel(), options);
+
+    String response = chatCompletions.getChoices().get(0).getMessage().getContent();
+
+    logger.info("Raw OpenAI API response: {}", response);
+
+    return response;
   }
 
   /*
@@ -169,10 +189,26 @@ public class P2TLLMService {
    * @return the api call for Gemini.
    */
   private String createCallGemini(String body, OpenAiApiDTO dto) {
-    Client clientGemini = Client.builder().apiKey(dto.getApiKey()).build();
+    Client client = Client.builder().apiKey(dto.getApiKey()).build();
     GenerateContentConfig config =
         GenerateContentConfig.builder().temperature((float) 0.7).maxOutputTokens(4096).build();
-    return "";
+
+    List<Content> chatMessages = new ArrayList<>();
+    chatMessages.add(
+        Content.builder()
+            .role("model")
+            .parts(List.of(Part.fromText("You are a helpful assistant.")))
+            .build());
+    chatMessages.add(
+        Content.builder()
+            .role("user")
+            .parts(List.of(Part.fromText(dto.getPrompt() + body)))
+            .build());
+
+    GenerateContentResponse response =
+        client.models.generateContent(dto.getGptModel(), chatMessages, config);
+
+    return response.text();
   }
 
   /*
