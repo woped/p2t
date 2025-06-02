@@ -54,16 +54,31 @@ public class P2TController {
   @PostMapping(value = "/generateTextLLM", consumes = "text/plain", produces = "text/plain")
   protected String generateTextLLM(
       @RequestBody String body,
-      @RequestParam(required = true) String apiKey,
+      @RequestParam(required = false) String apiKey,
       @RequestParam(required = true) String prompt,
-      @RequestParam(required = true) String gptModel) {
+      @RequestParam(required = true) String gptModel,
+      @RequestParam(required = true) String provider,
+      @RequestParam(required = true) boolean useRag) {
     logger.debug(
         "Received request with apiKey: {}, prompt: {}, gptModel: {}, body: {}",
         apiKey,
         prompt,
         gptModel,
         body.replaceAll("[\n\r\t]", "_"));
-    OpenAiApiDTO openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, prompt);
+
+    OpenAiApiDTO openAiApiDTO;
+    if (provider.equalsIgnoreCase("lmStudio")) {
+
+      openAiApiDTO = new OpenAiApiDTO(null, gptModel, prompt, provider, useRag);
+    } else {
+
+      //   if (apiKey == null || apiKey.isEmpty()) {
+      //     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "API key is required for
+      // OpenAI");
+      // }
+      openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, prompt, provider, useRag);
+    }
+
     try {
       String response = llmService.callLLM(body, openAiApiDTO);
       logger.debug("LLM Response: " + response);

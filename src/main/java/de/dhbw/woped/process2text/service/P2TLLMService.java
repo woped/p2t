@@ -141,7 +141,7 @@ public class P2TLLMService {
       apiCallString = createCallOpenAi(body, dto);
     } else if (provider.equals("gemini")) {
       apiCallString = createCallGemini(body, dto);
-    } else if (provider.equals("llmStudio")) {
+    } else if (provider.equals("lmStudio")) {
       apiCallString = createCallLlmStudio(body, dto);
     }
 
