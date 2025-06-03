@@ -133,25 +133,26 @@ public class P2TLLMService {
     }
 
     // Get Provider
-    String provider = ""; // = dto.getProvider();
+    String provider = dto.getprovider(); // = dto.getProvider();
 
     // Call provider
-    String apiCallString = "";
-    if (provider.equals("openai")) {
-      apiCallString = createCallOpenAi(body, dto);
-    } else if (provider.equals("gemini")) {
-      apiCallString = createCallGemini(body, dto);
-    } else if (provider.equals("llmStudio")) {
-      apiCallString = createCallLlmStudio(body, dto);
+    String response = "";
+    switch (provider) {
+      case "openai":
+        response = createCallOpenAi(body, dto);
+        break;
+      case "gemini":
+        response = createCallGemini(body, dto);
+        break;
+      case "llmStudio":
+        response = createCallLlmStudio(body, dto);
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown Provider: " + provider);
     }
 
-    return callAPI(apiCallString);
+    return response;
   }
-
-  private String callAPI(String apiCallString) {
-    return "";
-  }
-  ;
 
   /*
    * Creates the API Call for the OpenAI API with the provided text and API details.
@@ -188,7 +189,7 @@ public class P2TLLMService {
    * @param openAiApiDTO Contains the API key, Gemini model, and prompt.
    * @return the api call for Gemini.
    */
-  private String createCallGemini(String body, OpenAiApiDTO dto) {
+  public String createCallGemini(String body, OpenAiApiDTO dto) {
     Client client = Client.builder().apiKey(dto.getApiKey()).build();
     GenerateContentConfig config =
         GenerateContentConfig.builder().temperature((float) 0.7).maxOutputTokens(4096).build();
@@ -257,6 +258,12 @@ public class P2TLLMService {
     }
   }
 
+  /**
+   * Retrieves the list of available Gemini models.
+   *
+   * @param apiKey The API key for Gemini.
+   * @return A list of model names as strings.
+   */
   public List<String> getGeminiModels(String apiKey) {
     String url = "https://generativelanguage.googleapis.com/v1beta/models";
     RestTemplate restTemplate = new RestTemplate();
@@ -268,9 +275,14 @@ public class P2TLLMService {
       String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
       JSONObject jsonResponse = new JSONObject(response);
       JSONArray models = jsonResponse.getJSONArray("models");
-      return models.toList().stream()
-          .map(model -> ((Map<String, Object>) model).get("name").toString())
-          .collect(Collectors.toList());
+      List<String> modelNames = new ArrayList<>();
+      for (int i = 0; i < models.length(); i++) {
+        JSONObject model = models.getJSONObject(i);
+        modelNames.add(model.getString("name"));
+      }
+
+      System.out.println("Verfügbare Gemini Modelle: " + modelNames);
+      return modelNames;
     } catch (HttpClientErrorException e) {
       logger.error("Error retrieving models from Gemini API: {}", e.getResponseBodyAsString());
       throw new ResponseStatusException(

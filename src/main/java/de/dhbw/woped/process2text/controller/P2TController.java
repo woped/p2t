@@ -69,9 +69,10 @@ public class P2TController {
         prompt,
         gptModel,
         body.replaceAll("[\n\r\t]", "_"));
-    OpenAiApiDTO openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, prompt);
+    OpenAiApiDTO openAiApiDTO = new OpenAiApiDTO("gemini", apiKey, gptModel, prompt);
+
     try {
-      String response = llmService.callLLM(body, openAiApiDTO);
+      String response = llmService.callLLM2(body, openAiApiDTO);
       logger.debug("LLM Response: " + response);
       return response;
     } catch (ResponseStatusException e) {
@@ -88,6 +89,11 @@ public class P2TController {
    */
   @GetMapping("/gptModels")
   public List<String> getGptModels(@RequestParam(required = true) String apiKey) {
-    return llmService.getGptModels(apiKey);
+    // Funktion muss aufgrund des hardgecodeten Providers an Gemini oder OpenAI angepasst werden
+    // Später sollte das mit getprovider() geregelt werden
+    // OpenAI:
+    // return llmService.getGptModels(apiKey);
+    // Gemini:
+    return llmService.getGeminiModels(apiKey);
   }
 }

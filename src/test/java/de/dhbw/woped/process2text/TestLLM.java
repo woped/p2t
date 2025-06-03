@@ -18,15 +18,17 @@ import java.util.stream.Collectors;
 public class TestLLM {
 
   public static void main(String[] args) {
-    OpenAiApiDTO testDTO = new OpenAiApiDTO("", "gpt-3.5-turbo", "Count from 1 to 10");
+    // OpenAIApiDTO kann nicht verwendet werden, da hier die Provider informationen fehlen
+   // OpenAiApiDTO testDTO = new OpenAiApiDTO("", "gpt-3.5-turbo", "Count from 1 to 10");
     // System.out.println(
     // callLLM("Count from 1 to 10, just list the numbers, nothing else.", testDTO));
 
-    OpenAiApiDTO testDTOGemini = new OpenAiApiDTO("", "gemini-1.5-pro", "Count from 1 to 10");
+    // OpenAIApiDTO kann nicht verwendet werden, da hier die Provider informationen fehlen
+    //OpenAiApiDTO testDTOGemini = new OpenAiApiDTO("", "gemini-1.5-pro", "Count from 1 to 10");
     // System.out.println(callLLMGemini("Count from 1 to 10, just list the numbers, nothing else.",
     // testDTOGemini));
 
-    System.out.println(getGptModels(testDTO.getApiKey()));
+    // System.out.println(getGptModels(testDTO.getApiKey()));
     // System.out.println(getGeminiModels(testDTOGemini.getApiKey()));
   }
 
