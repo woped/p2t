@@ -257,6 +257,34 @@ public class P2TLLMService {
     }
   }
 
+  public List<String> getGeminiModels(String apiKey) {
+    String url = "https://generativelanguage.googleapis.com/v1beta/models";
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("X-Goog-Api-Key", apiKey);
+    HttpEntity<String> entity = new HttpEntity<>(headers);
+
+    try {
+      String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+      JSONObject jsonResponse = new JSONObject(response);
+      JSONArray models = jsonResponse.getJSONArray("models");
+      return models.toList().stream()
+          .map(model -> ((Map<String, Object>) model).get("name").toString())
+          .collect(Collectors.toList());
+    } catch (HttpClientErrorException e) {
+      logger.error("Error retrieving models from Gemini API: {}", e.getResponseBodyAsString());
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Gemini API error: " + e.getResponseBodyAsString(), e);
+    } catch (RestClientException e) {
+      logger.error("Error retrieving models from Gemini API", e);
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Error retrieving models from Gemini API", e);
+    } catch (JSONException e) {
+      logger.error("Error parsing Gemini API response", e);
+      throw new RuntimeException("Error parsing Gemini API response", e);
+    }
+  }
+
   /**
    * Parses the response from the OpenAI API to extract the content.
    *
