@@ -2,6 +2,7 @@ package de.dhbw.woped.process2text.service;
 
 import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Service class to handle interaction with the OpenAI API. This service sends text to the API and
+ * Service class to handle interaction with the LLM APIs. This service sends text to the API and
  * retrieves the generated response.
  */
 @Service
@@ -100,7 +101,7 @@ public class P2TLLMService {
     } else if (provider.equals("gemini")) {
       apiCallString = createCallGemini(body, dto);
     } else if (provider.equals("llmStudio")) {
-      apiCallString = createCallLlmStudio(body, dto);
+      apiCallString = createCallLmStudio(body, dto);
     }
 
     return callAPI(apiCallString);
@@ -135,16 +136,55 @@ public class P2TLLMService {
     return "";
   }
 
-  /*
-   * Creates the API Call for the LlmStudio API with the provided text and API details.
+  /**
+   * Creates the API call for the LM Studio API using the provided text and API details.
    *
-   * @param body The text to be sent to the LlmStudio API.
-   * @param openAiApiDTO Contains the API key, GPT model, and prompt.
-   * @return the api call for LlmStudio.
+   * @param body The text to be sent to the LM Studio API.
+   * @param dto Contains the GPT model and prompt.
+   * @return The generated response from the LM Studio model.
    */
-  private String createCallLlmStudio(String body, OpenAiApiDTO dto) {
+  private String createCallLmStudio(String body, OpenAiApiDTO dto) {
+    String apiUrl = "http://localhost:1234/v1/chat/completions"; // Default LM Studio API endpoint
 
-    return "";
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Content-Type", "application/json");
+
+    // Determine role for the first message based on the model, Mistral models use "assistant" as
+    // the first role
+    // and others use "system"
+    String firstRole = dto.getGptModel().toLowerCase().contains("mistral") ? "assistant" : "system";
+
+    // Create the request body according to the OpenAI-compatible format
+    Map<String, Object> requestBody =
+        Map.of(
+            "model",
+            dto.getGptModel(),
+            "messages",
+            List.of(
+                Map.of("role", firstRole, "content", "You are a helpful assistant."),
+                Map.of("role", "user", "content", dto.getPrompt() + body)),
+            "max_tokens",
+            4096,
+            "temperature",
+            0.7);
+
+    HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+    try {
+      // Send the request and parse the response
+      String response = restTemplate.postForObject(apiUrl, entity, String.class);
+      logger.info("LM Studio raw response: {}", response);
+
+      return extractContentFromResponse(response);
+
+    } catch (HttpClientErrorException e) {
+      logger.error("Error calling LM Studio API: {}", e.getResponseBodyAsString());
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "LM Studio API error", e);
+    } catch (Exception e) {
+      logger.error("Unexpected error when calling LM Studio API", e);
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "LM Studio error", e);
+    }
   }
 
   /**
@@ -178,6 +218,78 @@ public class P2TLLMService {
     } catch (JSONException e) {
       logger.error("Error parsing OpenAI API response", e);
       throw new RuntimeException("Error parsing OpenAI API response", e);
+    }
+  }
+
+  /**
+   * Retrieves the list of available Gemini models.
+   *
+   * @param apiKey The API key for Gemini.
+   * @return A list of model names as strings.
+   */
+  public List<String> getGeminiModels(String apiKey) {
+    String url = "https://generativelanguage.googleapis.com/v1beta/models";
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("X-Goog-Api-Key", apiKey);
+    HttpEntity<String> entity = new HttpEntity<>(headers);
+
+    try {
+      String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+      JSONObject jsonResponse = new JSONObject(response);
+      JSONArray models = jsonResponse.getJSONArray("models");
+      List<String> modelNames = new ArrayList<>();
+      for (int i = 0; i < models.length(); i++) {
+        JSONObject model = models.getJSONObject(i);
+        modelNames.add(model.getString("name"));
+      }
+
+      System.out.println("Verfügbare Gemini Modelle: " + modelNames);
+      return modelNames;
+    } catch (HttpClientErrorException e) {
+      logger.error("Error retrieving models from Gemini API: {}", e.getResponseBodyAsString());
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Gemini API error: " + e.getResponseBodyAsString(), e);
+    } catch (RestClientException e) {
+      logger.error("Error retrieving models from Gemini API", e);
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Error retrieving models from Gemini API", e);
+    } catch (JSONException e) {
+      logger.error("Error parsing Gemini API response", e);
+      throw new RuntimeException("Error parsing Gemini API response", e);
+    }
+  }
+
+  /**
+   * Retrieves the list of available models from the LM Studio API.
+   *
+   * @return A list of model names as strings.
+   */
+  public List<String> getLmStudioModels() {
+    String url = "http://localhost:1234/api/v0/models";
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    HttpEntity<String> entity = new HttpEntity<>(headers);
+
+    try {
+      String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+      JSONObject jsonResponse = new JSONObject(response);
+      JSONArray models = jsonResponse.getJSONArray("data");
+
+      return models.toList().stream()
+          .map(model -> ((Map<String, Object>) model).get("id").toString())
+          .collect(Collectors.toList());
+    } catch (HttpClientErrorException e) {
+      logger.error("Error retrieving models from LM Studio API: {}", e.getResponseBodyAsString());
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "LM Studio API error: " + e.getResponseBodyAsString(), e);
+    } catch (RestClientException e) {
+      logger.error("Error retrieving models from LM Studio API", e);
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Error retrieving models from LM Studio API", e);
+    } catch (JSONException e) {
+      logger.error("Error parsing LM Studio API response", e);
+      throw new RuntimeException("Error parsing LM Studio API response", e);
     }
   }
 
