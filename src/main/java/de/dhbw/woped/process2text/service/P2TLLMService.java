@@ -133,12 +133,12 @@ public class P2TLLMService {
     }
 
     // Get Provider
-    String provider = dto.getprovider(); // = dto.getProvider();
+    String provider = dto.getProvider();
 
     // Call provider
     String response = "";
     switch (provider) {
-      case "openai":
+      case "openAi":
         response = createCallOpenAi(body, dto);
         break;
       case "gemini":

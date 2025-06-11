@@ -19,12 +19,12 @@ public class TestLLM {
 
   public static void main(String[] args) {
     // OpenAIApiDTO kann nicht verwendet werden, da hier die Provider informationen fehlen
-   // OpenAiApiDTO testDTO = new OpenAiApiDTO("", "gpt-3.5-turbo", "Count from 1 to 10");
+    // OpenAiApiDTO testDTO = new OpenAiApiDTO("", "gpt-3.5-turbo", "Count from 1 to 10");
     // System.out.println(
     // callLLM("Count from 1 to 10, just list the numbers, nothing else.", testDTO));
 
     // OpenAIApiDTO kann nicht verwendet werden, da hier die Provider informationen fehlen
-    //OpenAiApiDTO testDTOGemini = new OpenAiApiDTO("", "gemini-1.5-pro", "Count from 1 to 10");
+    // OpenAiApiDTO testDTOGemini = new OpenAiApiDTO("", "gemini-1.5-pro", "Count from 1 to 10");
     // System.out.println(callLLMGemini("Count from 1 to 10, just list the numbers, nothing else.",
     // testDTOGemini));
 
