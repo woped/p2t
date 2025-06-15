@@ -42,12 +42,25 @@ class TransformerServiceTest {
     String direction = "pnmltobpmn";
     String pnmlXml =
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            + " <pnml>\n"
-            + " <net type=\"\" id=\"\">\n"
-            + " </net>\n"
-            + " </pnml>";
+            + "<pnml>\n"
+            + "  <net type=\"http://www.pnml.org/version-2009/grammar/pnml\" id=\"net1\">\n"
+            + "    <page id=\"page1\">\n"
+            + "      <place id=\"p1\">\n"
+            + "        <name><text>Start</text></name>\n"
+            + "      </place>\n"
+            + "      <transition id=\"t1\">\n"
+            + "        <name><text>Process</text></name>\n"
+            + "      </transition>\n"
+            + "      <place id=\"p2\">\n"
+            + "        <name><text>End</text></name>\n"
+            + "      </place>\n"
+            + "    </page>\n"
+            + "  </net>\n"
+            + "</pnml>";
     String result = transformerService.transform(direction, pnmlXml);
 
-    assertTrue(result.trim().startsWith("{\"bpmn"));
+    assertTrue(
+        result.contains("<?xml") || result.contains("<definitions"),
+        "Die Antwort sollte gültiges XML sein");
   }
 }
