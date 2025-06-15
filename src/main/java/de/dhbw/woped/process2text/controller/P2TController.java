@@ -82,8 +82,7 @@ public class P2TController {
     return httpRequestDuration.record(
         () -> {
           logger.debug(
-              "Received request with apiKey: {}, prompt: {}, gptModel: {}, body: {}",
-              apiKey,
+              "Received request with prompt: {}, gptModel: {}, body: {}",
               prompt,
               gptModel,
               body.replaceAll("[\n\r\t]", "_"));
