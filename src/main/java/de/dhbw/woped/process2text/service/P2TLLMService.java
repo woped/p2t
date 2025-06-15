@@ -1,6 +1,5 @@
 package de.dhbw.woped.process2text.service;
 
-import com.azure.ai.openai.OpenAIClient;
 import com.azure.ai.openai.OpenAIClientBuilder;
 import com.azure.ai.openai.models.ChatCompletions;
 import com.azure.ai.openai.models.ChatCompletionsOptions;
@@ -13,6 +12,10 @@ import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.chat.completions.ChatCompletion;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.ArrayList;
@@ -59,23 +62,21 @@ public class P2TLLMService {
       body = transformerService.transform("pnmltobpmn", body);
     }
 
-    OpenAIClient client =
-        new OpenAIClientBuilder()
-            .credential(new KeyCredential(openAiApiDTO.getApiKey()))
-            .buildClient();
+    OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(openAiApiDTO.getApiKey()).build();
 
-    List<ChatRequestMessage> chatMessages = new ArrayList<>();
-    chatMessages.add(new ChatRequestSystemMessage("You are a helpful assistant."));
-    chatMessages.add(new ChatRequestUserMessage(openAiApiDTO.getPrompt() + body));
-    // chatMessages.add(new ChatRequestUserMessage(body));
+    ChatCompletionCreateParams createParams =
+        ChatCompletionCreateParams.builder()
+            .model(openAiApiDTO.getGptModel())
+            .maxCompletionTokens(4096)
+            .temperature(0.7)
+            .addSystemMessage("You are a helpful assistant.")
+            .addUserMessage(openAiApiDTO.getPrompt())
+            .addUserMessage(body)
+            .build();
 
-    ChatCompletionsOptions options =
-        new ChatCompletionsOptions(chatMessages).setMaxTokens(4096).setTemperature(0.7);
+    ChatCompletion chatCompletion = client.chat().completions().create(createParams);
 
-    ChatCompletions chatCompletions =
-        client.getChatCompletions(openAiApiDTO.getGptModel(), options);
-
-    String response = chatCompletions.getChoices().get(0).getMessage().getContent();
+    String response = chatCompletion.choices().get(0).message().content().get();
 
     logger.info("Raw OpenAI API response: {}", response);
 
