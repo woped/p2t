@@ -257,24 +257,24 @@ public class P2TLLMService {
    * @param response The raw JSON response from the OpenAI API.
    * @return The extracted content from the response.
    */
-  //   private String extractContentFromResponse(String response) {
-  //     try {
-  //       // Assuming the response is a JSON string, parse it
-  //       JSONObject jsonResponse = new JSONObject(response);
-  //       JSONArray choices = jsonResponse.getJSONArray("choices");
-  //       if (choices.length() > 0) {
-  //         // Get the first choice and extract the message content
-  //         JSONObject firstChoice = choices.getJSONObject(0);
-  //         JSONObject message = firstChoice.getJSONObject("message");
-  //         return message.getString("content");
-  //       } else {
-  //         throw new ResponseStatusException(
-  //             HttpStatus.INTERNAL_SERVER_ERROR, "No choices found in the response");
-  //       }
-  //     } catch (JSONException e) {
-  //       logger.error("Error parsing OpenAI API response", e);
-  //       throw new ResponseStatusException(
-  //           HttpStatus.INTERNAL_SERVER_ERROR, "Error parsing OpenAI API response", e);
-  //     }
-  //   }
+  private String extractContentFromResponse(String response) {
+    try {
+      // Assuming the response is a JSON string, parse it
+      JSONObject jsonResponse = new JSONObject(response);
+      JSONArray choices = jsonResponse.getJSONArray("choices");
+      if (choices.length() > 0) {
+        // Get the first choice and extract the message content
+        JSONObject firstChoice = choices.getJSONObject(0);
+        JSONObject message = firstChoice.getJSONObject("message");
+        return message.getString("content");
+      } else {
+        throw new ResponseStatusException(
+            HttpStatus.INTERNAL_SERVER_ERROR, "No choices found in the response");
+      }
+    } catch (JSONException e) {
+      logger.error("Error parsing OpenAI API response", e);
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Error parsing OpenAI API response", e);
+    }
+  }
 }
