@@ -32,7 +32,6 @@ public class TestLLM {
         new OpenAiApiDTO(null, "llama-3.2-1b-instruct", "Count from 1 to 10", "lmStudio", false);
 
     System.out.println(getGptModels(testDTO.getApiKey()));
-    // System.out.println(getGeminiModels(testDTOGemini.getApiKey()));
   }
 
   public static String callLLM(String body, OpenAiApiDTO openAiApiDTO) {

@@ -1,18 +1,14 @@
 package de.dhbw.woped.process2text.service;
 
-import com.azure.ai.openai.OpenAIClient;
-import com.azure.ai.openai.OpenAIClientBuilder;
-import com.azure.ai.openai.models.ChatCompletions;
-import com.azure.ai.openai.models.ChatCompletionsOptions;
-import com.azure.ai.openai.models.ChatRequestMessage;
-import com.azure.ai.openai.models.ChatRequestSystemMessage;
-import com.azure.ai.openai.models.ChatRequestUserMessage;
-import com.azure.core.credential.KeyCredential;
 import com.google.genai.Client;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.chat.completions.ChatCompletion;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.ArrayList;
@@ -59,70 +55,26 @@ public class P2TLLMService {
       body = transformerService.transform("pnmltobpmn", body);
     }
 
-    OpenAIClient client =
-        new OpenAIClientBuilder()
-            .credential(new KeyCredential(openAiApiDTO.getApiKey()))
-            .buildClient();
+    OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(openAiApiDTO.getApiKey()).build();
 
-    List<ChatRequestMessage> chatMessages = new ArrayList<>();
-    chatMessages.add(new ChatRequestSystemMessage("You are a helpful assistant."));
-    chatMessages.add(new ChatRequestUserMessage(openAiApiDTO.getPrompt() + body));
-    // chatMessages.add(new ChatRequestUserMessage(body));
+    ChatCompletionCreateParams createParams =
+        ChatCompletionCreateParams.builder()
+            .model(openAiApiDTO.getGptModel())
+            .maxCompletionTokens(4096)
+            .temperature(0.7)
+            .addSystemMessage("You are a helpful assistant.")
+            .addUserMessage(openAiApiDTO.getPrompt())
+            .addUserMessage(body)
+            .build();
 
-    ChatCompletionsOptions options =
-        new ChatCompletionsOptions(chatMessages).setMaxTokens(4096).setTemperature(0.7);
+    ChatCompletion chatCompletion = client.chat().completions().create(createParams);
 
-    ChatCompletions chatCompletions =
-        client.getChatCompletions(openAiApiDTO.getGptModel(), options);
-
-    String response = chatCompletions.getChoices().get(0).getMessage().getContent();
+    String response = chatCompletion.choices().get(0).message().content().get();
 
     logger.info("Raw OpenAI API response: {}", response);
 
     return response;
   }
-
-  // String apiUrl = "https://api.openai.com/v1/chat/completions";
-  // // Use the Transformer API if the provided processmodell is a PNML to parse it
-  // // into an BPMN
-  // TransformerService transformerService = new TransformerService();
-  // if (transformerService.checkForBPMNorPNML(body).equals("PNML")) {
-  //   body = transformerService.transform("pnmltobpmn", body);
-  // }
-  // RestTemplate restTemplate = new RestTemplate();
-  // HttpHeaders headers = new HttpHeaders();
-  // headers.set("Authorization", "Bearer " + openAiApiDTO.getApiKey());
-  // headers.setContentType(MediaType.APPLICATION_JSON);
-
-  // // Create the request body with the specified model, messages, max tokens, and
-  // // temperature
-  // Map<String, Object> requestBody = new HashMap<>();
-  // requestBody.put("model", openAiApiDTO.getGptModel());
-  // requestBody.put(
-  //     "messages",
-  //     List.of(
-  //         Map.of("role", "system", "content", "You are a helpful assistant."),
-  //         Map.of("role", "user", "content", openAiApiDTO.getPrompt()),
-  //         Map.of("role", "user", "content", body)));
-  // requestBody.put("max_tokens", 4096);
-  // requestBody.put("temperature", 0.7);
-
-  // HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-  // try {
-  //   // Send the request to the OpenAI API and get the response as a string
-  //   String response = restTemplate.postForObject(apiUrl, entity, String.class);
-  //   // Parse the response to extract the content
-  //   return extractContentFromResponse(response);
-  // } catch (HttpClientErrorException e) {
-  //   logger.error("Error calling OpenAI API: {}", e.getResponseBodyAsString());
-  //   throw new ResponseStatusException(
-  //       HttpStatus.BAD_REQUEST, "OpenAI API error: " + e.getResponseBodyAsString(), e);
-  // } catch (RestClientException e) {
-  //   logger.error("Error calling OpenAI API", e);
-  //   throw new ResponseStatusException(
-  //       HttpStatus.INTERNAL_SERVER_ERROR, "Error calling OpenAI API", e);
-  // }
 
   public String callLLM2(String body, OpenAiApiDTO dto) {
     // Use the Transformer API if the provided processmodell is a PNML to parse it
@@ -133,25 +85,26 @@ public class P2TLLMService {
     }
 
     // Get Provider
-    String provider = ""; // = dto.getProvider();
+    String provider = dto.getProvider();
 
     // Call provider
-    String apiCallString = "";
-    if (provider.equals("openai")) {
-      apiCallString = createCallOpenAi(body, dto);
-    } else if (provider.equals("gemini")) {
-      apiCallString = createCallGemini(body, dto);
-    } else if (provider.equals("lmStudio")) {
-      apiCallString = createCallLlmStudio(body, dto);
+    String response = "";
+    switch (provider) {
+      case "openAi":
+        response = createCallOpenAi(body, dto);
+        break;
+      case "gemini":
+        response = createCallGemini(body, dto);
+        break;
+      case "llmStudio":
+        response = createCallLlmStudio(body, dto);
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown Provider: " + provider);
     }
 
-    return callAPI(apiCallString);
+    return response;
   }
-
-  private String callAPI(String apiCallString) {
-    return "";
-  }
-  ;
 
   /*
    * Creates the API Call for the OpenAI API with the provided text and API details.
@@ -161,20 +114,22 @@ public class P2TLLMService {
    * @return the api call for Open Ai.
    */
   private String createCallOpenAi(String body, OpenAiApiDTO dto) {
-    OpenAIClient client =
-        new OpenAIClientBuilder().credential(new KeyCredential(dto.getApiKey())).buildClient();
 
-    List<ChatRequestMessage> chatMessages = new ArrayList<>();
-    chatMessages.add(new ChatRequestSystemMessage("You are a helpful assistant."));
-    chatMessages.add(new ChatRequestUserMessage(dto.getPrompt() + body));
-    // chatMessages.add(new ChatRequestUserMessage(body));
+    OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(dto.getApiKey()).build();
 
-    ChatCompletionsOptions options =
-        new ChatCompletionsOptions(chatMessages).setMaxTokens(4096).setTemperature(0.7);
+    ChatCompletionCreateParams createParams =
+        ChatCompletionCreateParams.builder()
+            .model(dto.getGptModel())
+            .maxCompletionTokens(4096)
+            .temperature(0.7)
+            .addSystemMessage("You are a helpful assistant.")
+            .addUserMessage(dto.getPrompt())
+            .addUserMessage(body)
+            .build();
 
-    ChatCompletions chatCompletions = client.getChatCompletions(dto.getGptModel(), options);
+    ChatCompletion chatCompletion = client.chat().completions().create(createParams);
 
-    String response = chatCompletions.getChoices().get(0).getMessage().getContent();
+    String response = chatCompletion.choices().get(0).message().content().get();
 
     logger.info("Raw OpenAI API response: {}", response);
 
@@ -188,7 +143,7 @@ public class P2TLLMService {
    * @param openAiApiDTO Contains the API key, Gemini model, and prompt.
    * @return the api call for Gemini.
    */
-  private String createCallGemini(String body, OpenAiApiDTO dto) {
+  public String createCallGemini(String body, OpenAiApiDTO dto) {
     Client client = Client.builder().apiKey(dto.getApiKey()).build();
     GenerateContentConfig config =
         GenerateContentConfig.builder().temperature((float) 0.7).maxOutputTokens(4096).build();
@@ -258,29 +213,68 @@ public class P2TLLMService {
   }
 
   /**
+   * Retrieves the list of available Gemini models.
+   *
+   * @param apiKey The API key for Gemini.
+   * @return A list of model names as strings.
+   */
+  public List<String> getGeminiModels(String apiKey) {
+    String url = "https://generativelanguage.googleapis.com/v1beta/models";
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("X-Goog-Api-Key", apiKey);
+    HttpEntity<String> entity = new HttpEntity<>(headers);
+
+    try {
+      String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+      JSONObject jsonResponse = new JSONObject(response);
+      JSONArray models = jsonResponse.getJSONArray("models");
+      List<String> modelNames = new ArrayList<>();
+      for (int i = 0; i < models.length(); i++) {
+        JSONObject model = models.getJSONObject(i);
+        modelNames.add(model.getString("name"));
+      }
+
+      System.out.println("Verfügbare Gemini Modelle: " + modelNames);
+      return modelNames;
+    } catch (HttpClientErrorException e) {
+      logger.error("Error retrieving models from Gemini API: {}", e.getResponseBodyAsString());
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Gemini API error: " + e.getResponseBodyAsString(), e);
+    } catch (RestClientException e) {
+      logger.error("Error retrieving models from Gemini API", e);
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Error retrieving models from Gemini API", e);
+    } catch (JSONException e) {
+      logger.error("Error parsing Gemini API response", e);
+      throw new RuntimeException("Error parsing Gemini API response", e);
+    }
+  }
+
+  /**
    * Parses the response from the OpenAI API to extract the content.
    *
    * @param response The raw JSON response from the OpenAI API.
    * @return The extracted content from the response.
    */
-  //   private String extractContentFromResponse(String response) {
-  //     try {
-  //       // Assuming the response is a JSON string, parse it
-  //       JSONObject jsonResponse = new JSONObject(response);
-  //       JSONArray choices = jsonResponse.getJSONArray("choices");
-  //       if (choices.length() > 0) {
-  //         // Get the first choice and extract the message content
-  //         JSONObject firstChoice = choices.getJSONObject(0);
-  //         JSONObject message = firstChoice.getJSONObject("message");
-  //         return message.getString("content");
-  //       } else {
-  //         throw new ResponseStatusException(
-  //             HttpStatus.INTERNAL_SERVER_ERROR, "No choices found in the response");
-  //       }
-  //     } catch (JSONException e) {
-  //       logger.error("Error parsing OpenAI API response", e);
-  //       throw new ResponseStatusException(
-  //           HttpStatus.INTERNAL_SERVER_ERROR, "Error parsing OpenAI API response", e);
-  //     }
-  //   }
+  private String extractContentFromResponse(String response) {
+    try {
+      // Assuming the response is a JSON string, parse it
+      JSONObject jsonResponse = new JSONObject(response);
+      JSONArray choices = jsonResponse.getJSONArray("choices");
+      if (choices.length() > 0) {
+        // Get the first choice and extract the message content
+        JSONObject firstChoice = choices.getJSONObject(0);
+        JSONObject message = firstChoice.getJSONObject("message");
+        return message.getString("content");
+      } else {
+        throw new ResponseStatusException(
+            HttpStatus.INTERNAL_SERVER_ERROR, "No choices found in the response");
+      }
+    } catch (JSONException e) {
+      logger.error("Error parsing OpenAI API response", e);
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Error parsing OpenAI API response", e);
+    }
+  }
 }

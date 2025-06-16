@@ -36,6 +36,8 @@ _It is recommended to use IntelliJ IDE._
 3. Wait until all files have been loaded.
 4. Run Application with the Start-Button or with `mvn spring-boot:run`
 
+After cloning this repository, it's essential to [set up git hooks](https://github.com/woped/woped-git-hooks/blob/main/README.md#activating-git-hooks-after-cloning-a-repository) to ensure project standards.
+
 # Testing
 
 ### Testing via Swagger UI

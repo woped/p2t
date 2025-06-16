@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -66,21 +67,17 @@ public class P2TController {
         gptModel,
         body.replaceAll("[\n\r\t]", "_"));
 
+
     OpenAiApiDTO openAiApiDTO;
     if (provider.equalsIgnoreCase("lmStudio")) {
 
       openAiApiDTO = new OpenAiApiDTO(null, gptModel, prompt, provider, useRag);
     } else {
-
-      //   if (apiKey == null || apiKey.isEmpty()) {
-      //     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "API key is required for
-      // OpenAI");
-      // }
       openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, prompt, provider, useRag);
     }
 
     try {
-      String response = llmService.callLLM(body, openAiApiDTO);
+      String response = llmService.callLLM2(body, openAiApiDTO);
       logger.debug("LLM Response: " + response);
       return response;
     } catch (ResponseStatusException e) {
@@ -96,7 +93,18 @@ public class P2TController {
    * @return A list of model names as strings.
    */
   @GetMapping("/gptModels")
-  public List<String> getGptModels(@RequestParam(required = true) String apiKey) {
-    return llmService.getGptModels(apiKey);
+  public List<String> getGptModels(
+      @RequestParam(required = true) String apiKey,
+      @RequestParam(required = true) String provider) {
+    switch (provider.toLowerCase()) {
+      case "gemini":
+        return llmService.getGeminiModels(apiKey);
+      case "openAi":
+        return llmService.getGptModels(apiKey);
+      default:
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "Invalid provider. Supported providers are: 'gemini' and 'openai'");
+    }
   }
 }
