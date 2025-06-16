@@ -95,7 +95,7 @@ public class P2TController {
    */
   @GetMapping("/gptModels")
   public List<String> getGptModels(
-      @RequestParam(required = true) String apiKey,
+      @RequestParam(required = false) String apiKey,
       @RequestParam(required = true) String provider) {
     switch (provider.toLowerCase()) {
       case "gemini":
