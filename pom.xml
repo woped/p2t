@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.1</version>
+        <version>3.3.2</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>de.dhbw.woped</groupId>
@@ -38,6 +38,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.openai</groupId>
+            <artifactId>openai-java</artifactId>
+            <version>2.2.0</version>
+            </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
@@ -77,14 +82,9 @@
             <version>1.4_rc3</version>
         </dependency>
         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-boot-starter</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger-ui</artifactId>
-            <version>3.0.0</version>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.3.0</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.json-simple</groupId>
@@ -162,6 +162,11 @@
             <version>1.0</version>
         </dependency>
         <dependency>
+            <groupId>com.google.genai</groupId>
+            <artifactId>google-genai</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.woped.p2t</groupId>
             <artifactId>xercesImpl</artifactId>
             <version>1.0</version>
@@ -170,11 +175,6 @@
             <groupId>org.woped.p2t</groupId>
             <artifactId>xml-apis</artifactId>
             <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.10.2</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -226,43 +226,49 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.43.0</version>
+                <version>2.44.4</version>
                 <configuration>
-                    <formats>
-                        <format>
-                            <includes>
-                                <include>*.md</include>
-                                <include>.gitignore</include>
-                            </includes>
-                            <excludes>
-                                <exclude>LICENSE.md</exclude>
-                                <exclude>README.md</exclude>
-                            </excludes>
-                            <trimTrailingWhitespace/>
-                            <endWithNewline/>
-                            <indent>
-                                <tabs>true</tabs>
-                                <spacesPerTab>4</spacesPerTab>
-                            </indent>
-                        </format>
-                    </formats>
-                    <java>
-                        <importOrder/>
-                        <removeUnusedImports/>
-                        <googleJavaFormat>
-                            <version>1.17.0</version>
-                            <style>GOOGLE</style>
-                            <reflowLongStrings>true</reflowLongStrings>
-                            <groupArtifact>com.google.googlejavaformat:google-java-format</groupArtifact>
-                        </googleJavaFormat>
-                    </java>
+                <formats>
+                    <format>
+                    <includes>
+                        <include>*.md</include>
+                        <include>.gitignore</include>
+                    </includes>
+                    <excludes>
+                        <exclude>LICENSE.md</exclude>
+                        <exclude>README.md</exclude>
+                    </excludes>
+                    <trimTrailingWhitespace />
+                    <endWithNewline />
+                    <indent>
+                        <tabs>true</tabs>
+                        <spacesPerTab>4</spacesPerTab>
+                    </indent>
+                    </format>
+                </formats>
+                <java>
+                    <importOrder />
+                    <removeUnusedImports />
+                    <googleJavaFormat>
+                    <version>1.27.0</version>
+                    <style>GOOGLE</style>
+                    <reflowLongStrings>true</reflowLongStrings>
+                    <groupArtifact>com.google.googlejavaformat:google-java-format</groupArtifact>
+                    </googleJavaFormat>
+                </java>
                 </configuration>
                 <executions>
                     <execution>
                         <id>spotless-check</id>
                         <phase>compile</phase>
                         <goals>
-                            <goal>apply</goal>
+                        <goal>check</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <goals>
+                        <goal>check</goal>
+                        <goal>apply</goal>
                         </goals>
                     </execution>
                 </executions>

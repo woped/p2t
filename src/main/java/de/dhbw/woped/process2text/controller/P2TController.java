@@ -3,7 +3,6 @@ package de.dhbw.woped.process2text.controller;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import de.dhbw.woped.process2text.service.P2TLLMService;
 import de.dhbw.woped.process2text.service.P2TService;
-import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -33,7 +32,6 @@ public class P2TController {
    * @param body The process model in plain text format.
    * @return The translated text.
    */
-  @ApiOperation(value = "Translate a process model into human readable text.")
   @PostMapping(value = "/generateText", consumes = "text/plain", produces = "text/plain")
   protected String generateText(@RequestBody String body) {
     if (logger.isDebugEnabled()) {
@@ -54,14 +52,10 @@ public class P2TController {
    * @param gptModel The GPT model to be used for translation.
    * @return The translated text.
    */
-  @ApiOperation(
-      value =
-          "Translate a process model into human readable text using one of OpenAIs Large Language"
-              + " Models")
   @PostMapping(value = "/generateTextLLM", consumes = "text/plain", produces = "text/plain")
   protected String generateTextLLM(
       @RequestBody String body,
-      @RequestParam(required = true) String apiKey,
+      @RequestParam(required = false) String apiKey,
       @RequestParam(required = true) String prompt,
       @RequestParam(required = true) String gptModel,
       @RequestParam(required = true) String provider,
@@ -72,7 +66,15 @@ public class P2TController {
         prompt,
         gptModel,
         body.replaceAll("[\n\r\t]", "_"));
-    OpenAiApiDTO openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, prompt, provider, useRag);
+
+
+    OpenAiApiDTO openAiApiDTO;
+    if (provider.equalsIgnoreCase("lmStudio")) {
+
+      openAiApiDTO = new OpenAiApiDTO(null, gptModel, prompt, provider, useRag);
+    } else {
+      openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, prompt, provider, useRag);
+    }
 
     try {
       String response = llmService.callLLM2(body, openAiApiDTO);
@@ -99,12 +101,10 @@ public class P2TController {
         return llmService.getGeminiModels(apiKey);
       case "openAi":
         return llmService.getGptModels(apiKey);
-      case "lmStudio":
-        return llmService.getLmStudioModels();
       default:
         throw new ResponseStatusException(
             HttpStatus.BAD_REQUEST,
-            "Invalid provider. Supported providers are: 'gemini', 'openai' and 'lmStudio'.");
+            "Invalid provider. Supported providers are: 'gemini' and 'openai'");
     }
   }
 }
