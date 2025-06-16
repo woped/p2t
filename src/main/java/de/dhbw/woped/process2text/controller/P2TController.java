@@ -77,7 +77,7 @@ public class P2TController {
     }
 
     try {
-      String response = llmService.callLLM2(body, openAiApiDTO);
+      String response = llmService.callLLM(body, openAiApiDTO);
       logger.debug("LLM Response: " + response);
       return response;
     } catch (ResponseStatusException e) {
