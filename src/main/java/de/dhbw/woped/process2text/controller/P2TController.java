@@ -61,10 +61,11 @@ public class P2TController {
       @RequestParam(required = true) String provider,
       @RequestParam(required = true) boolean useRag) {
     logger.debug(
-        "Received request with apiKey: {}, prompt: {}, gptModel: {}, body: {}",
+        "Received request with apiKey: {}, prompt: {}, gptModel: {}, provider: {}, body: {}",
         apiKey,
         prompt,
         gptModel,
+        provider,
         body.replaceAll("[\n\r\t]", "_"));
 
 
