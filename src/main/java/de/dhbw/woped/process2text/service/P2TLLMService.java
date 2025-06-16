@@ -46,37 +46,7 @@ public class P2TLLMService {
    * @param openAiApiDTO Contains the API key, GPT model, and prompt.
    * @return The content of the response from the OpenAI API.
    */
-  public String callLLM(String body, OpenAiApiDTO openAiApiDTO) {
-
-    // Use the Transformer API if the provided processmodell is a PNML to parse it
-    // into an BPMN
-    TransformerService transformerService = new TransformerService();
-    if (transformerService.checkForBPMNorPNML(body).equals("PNML")) {
-      body = transformerService.transform("pnmltobpmn", body);
-    }
-
-    OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(openAiApiDTO.getApiKey()).build();
-
-    ChatCompletionCreateParams createParams =
-        ChatCompletionCreateParams.builder()
-            .model(openAiApiDTO.getGptModel())
-            .maxCompletionTokens(4096)
-            .temperature(0.7)
-            .addSystemMessage("You are a helpful assistant.")
-            .addUserMessage(openAiApiDTO.getPrompt())
-            .addUserMessage(body)
-            .build();
-
-    ChatCompletion chatCompletion = client.chat().completions().create(createParams);
-
-    String response = chatCompletion.choices().get(0).message().content().get();
-
-    logger.info("Raw OpenAI API response: {}", response);
-
-    return response;
-  }
-
-  public String callLLM2(String body, OpenAiApiDTO dto) {
+  public String callLLM(String body, OpenAiApiDTO dto) {
     // Use the Transformer API if the provided processmodell is a PNML to parse it
     // into an BPMN
     TransformerService transformerService = new TransformerService();
