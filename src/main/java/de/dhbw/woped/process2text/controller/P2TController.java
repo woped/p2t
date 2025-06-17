@@ -59,14 +59,13 @@ public class P2TController {
       @RequestParam(required = true) String prompt,
       @RequestParam(required = true) String gptModel,
       @RequestParam(required = true) String provider,
-      @RequestParam(required = true) boolean useRag) {
+      @RequestParam(required = false, defaultValue = "false") boolean useRag) {
     logger.debug(
         "Received request with apiKey: {}, prompt: {}, gptModel: {}, body: {}",
         apiKey,
         prompt,
         gptModel,
         body.replaceAll("[\n\r\t]", "_"));
-
 
     OpenAiApiDTO openAiApiDTO;
     if (provider.equalsIgnoreCase("lmStudio")) {
@@ -77,7 +76,7 @@ public class P2TController {
     }
 
     try {
-      String response = llmService.callLLM2(body, openAiApiDTO);
+      String response = llmService.callLLM(body, openAiApiDTO);
       logger.debug("LLM Response: " + response);
       return response;
     } catch (ResponseStatusException e) {
@@ -99,12 +98,14 @@ public class P2TController {
     switch (provider.toLowerCase()) {
       case "gemini":
         return llmService.getGeminiModels(apiKey);
-      case "openAi":
+      case "openai":
         return llmService.getGptModels(apiKey);
+      case "lmstudio":
+        return llmService.getLmStudioModels();
       default:
         throw new ResponseStatusException(
             HttpStatus.BAD_REQUEST,
-            "Invalid provider. Supported providers are: 'gemini' and 'openai'");
+            "Invalid provider. Supported providers are: 'gemini', 'openAi' and 'lmStudio'.");
     }
   }
 }

@@ -24,7 +24,7 @@ public class P2TLLMServiceTest {
     String body = "Dies ist ein Test.";
 
     try {
-      String result = service.callLLM2(body, dto);
+      String result = service.callLLM(body, dto);
       assertNotNull(result, "Antwort vom LLM war null.");
       assertFalse(result.isBlank(), "Antwort vom LLM war leer.");
 
@@ -35,8 +35,8 @@ public class P2TLLMServiceTest {
       writeToFile("target/llm-output.txt", "ResponseStatusException: " + e.getReason());
       fail("ResponseStatusException: " + e.getReason());
     } catch (Exception e) {
-      writeToFile("target/llm-output.txt", "Fehler beim Aufruf von callLLM2: " + e.getMessage());
-      fail("Fehler beim Aufruf von callLLM2: " + e.getMessage());
+      writeToFile("target/llm-output.txt", "Fehler beim Aufruf von callLLM: " + e.getMessage());
+      fail("Fehler beim Aufruf von callLLM: " + e.getMessage());
     }
   }
 

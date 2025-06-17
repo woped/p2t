@@ -570,14 +570,13 @@ class TextToIntermediateConverter {
     ConditionFragment cFrag;
     ExecutableFragment eFrag;
     ArrayList<DSynTSentence> preSentences;
-
     switch (event.getType()) {
 
-        // ***************************************************************
-        // 				INTERMEDIATE (CATCHING) EVENTS
-        // ***************************************************************
+      // ***************************************************************
+      // 				INTERMEDIATE (CATCHING) EVENTS
+      // ***************************************************************
 
-        // ERROR EVENT
+      // ERROR EVENT
       case de.dhbw.woped.process2text.model.process.EventType.INTM_ERROR:
         String error = event.getLabel();
 
@@ -603,7 +602,7 @@ class TextToIntermediateConverter {
         }
         break;
 
-        // TIMER EVENT
+      // TIMER EVENT
       case de.dhbw.woped.process2text.model.process.EventType.INTM_TIMER:
         String limit = event.getLabel();
         if (limit.equals("")) {
@@ -627,7 +626,7 @@ class TextToIntermediateConverter {
         configureFragment(cFrag);
         break;
 
-        // MESSAGE EVENT (CATCHING)
+      // MESSAGE EVENT (CATCHING)
       case de.dhbw.woped.process2text.model.process.EventType.INTM_MSG_CAT:
         cFrag =
             new ConditionFragment(
@@ -635,7 +634,7 @@ class TextToIntermediateConverter {
         configureFragment(cFrag);
         break;
 
-        // ESCALATION EVENT (CATCHING)
+      // ESCALATION EVENT (CATCHING)
       case de.dhbw.woped.process2text.model.process.EventType.INTM_ESCALATION_CAT:
         cFrag =
             new ConditionFragment(
@@ -644,11 +643,11 @@ class TextToIntermediateConverter {
         cFrag.boIsSubject = true;
         break;
 
-        // ***************************************************************
-        // 						START / END EVENTS
-        // ***************************************************************
+      // ***************************************************************
+      // 						START / END EVENTS
+      // ***************************************************************
 
-        // END EVENT
+      // END EVENT
       case de.dhbw.woped.process2text.model.process.EventType.END_EVENT:
         eFrag = new ExecutableFragment("finish", "process", "", "");
         eFrag.verbIsPassive = true;
@@ -656,7 +655,7 @@ class TextToIntermediateConverter {
         eFrag.boHasArticle = true;
         return getEventSentence(eFrag);
 
-        // ERROR EVENT
+      // ERROR EVENT
       case de.dhbw.woped.process2text.model.process.EventType.END_ERROR:
         eFrag = new ExecutableFragment("end", "process", "", "with an error");
         eFrag.boIsSubject = true;
@@ -671,7 +670,7 @@ class TextToIntermediateConverter {
         eFrag.addHasArticle = false;
         return getEventSentence(eFrag);
 
-        // START EVENT
+      // START EVENT
       case de.dhbw.woped.process2text.model.process.EventType.START_MSG:
         cFrag = new ConditionFragment("receive", "message", "", "", ConditionFragment.TYPE_ONCE);
         cFrag.boIsSubject = true;
@@ -683,36 +682,36 @@ class TextToIntermediateConverter {
         eFrag.boHasArticle = true;
         return getEventSentence(eFrag, cFrag);
 
-        // ***************************************************************
-        // 						THROWING EVENTS
-        // ***************************************************************
+      // ***************************************************************
+      // 						THROWING EVENTS
+      // ***************************************************************
 
-        // MESSAGE EVENT
+      // MESSAGE EVENT
       case de.dhbw.woped.process2text.model.process.EventType.INTM_MSG_THR:
         eFrag = new ExecutableFragment("send", "message", event.getLane().getName(), "");
         eFrag.boHasIndefArticle = true;
         return getEventSentence(eFrag);
 
-        // ESCALATION EVENT
+      // ESCALATION EVENT
       case de.dhbw.woped.process2text.model.process.EventType.INTM_ESCALATION_THR:
         eFrag = new ExecutableFragment("trigger", "escalation", event.getLane().getName(), "");
         eFrag.boHasIndefArticle = true;
         return getEventSentence(eFrag);
 
-        // LINK EVENT
+      // LINK EVENT
       case de.dhbw.woped.process2text.model.process.EventType.INTM_LINK_THR:
         eFrag = new ExecutableFragment("send", "signal", event.getLane().getName(), "");
         eFrag.boHasIndefArticle = true;
         return getEventSentence(eFrag);
 
-        // MULTIPLE TRIGGER
+      // MULTIPLE TRIGGER
       case de.dhbw.woped.process2text.model.process.EventType.INTM_MULTIPLE_THR:
         eFrag = new ExecutableFragment("cause", "multiple trigger", event.getLane().getName(), "");
         eFrag.boHasArticle = false;
         eFrag.boIsPlural = true;
         return getEventSentence(eFrag);
 
-        // SIGNAL EVENT
+      // SIGNAL EVENT
       case de.dhbw.woped.process2text.model.process.EventType.INTM_SIGNAL_THR:
         eFrag = new ExecutableFragment("send", "signal", event.getLane().getName(), "");
         eFrag.boHasArticle = true;
