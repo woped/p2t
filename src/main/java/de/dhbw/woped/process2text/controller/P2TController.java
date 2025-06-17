@@ -85,7 +85,7 @@ public class P2TController {
         // JSON body for the RAG service
         org.json.JSONObject requestJson = new org.json.JSONObject();
         requestJson.put("prompt", prompt);
-        requestJson.put("process_text", body);
+        requestJson.put("question", body);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
