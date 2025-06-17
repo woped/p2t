@@ -1,23 +1,21 @@
 package de.dhbw.woped.process2text;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.wiremock.spring.EnableWireMock;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.dhbw.woped.process2text.service.P2TLLMService;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.wiremock.spring.EnableWireMock;
 
 @SpringBootTest
 @EnableWireMock
@@ -63,4 +61,32 @@ class Process2textApplicationTests {
     assertTrue(models.contains("gpt-4"));
     assertTrue(models.contains("gpt-3.5-turbo"));
   }
+
+  // @Test
+  // void testCallLLM() {
+  //   String requestBody = "Dieser Text soll analysiert werden.";
+  //   OpenAiApiDTO dto = new OpenAiApiDTO("sk-testapikey", "gpt-3.5-turbo", "Summarize the
+  // following text:", "openAi", false);
+
+  //   stubFor(
+  //           post(urlPathEqualTo("/v1/chat/completions"))
+  //               .withHeader("Authorization", equalTo("Bearer " + dto.getApiKey()))
+  //               .withHeader("Content-Type", equalTo("application/json"))
+  //               // WireMock kann den Request Body auf bestimmte Inhalte prüfen
+  //               .withRequestBody(containing(dto.getPrompt()))
+  //               .withRequestBody(containing(requestBody))
+  //               .willReturn(
+  //                   aResponse()
+  //                       .withStatus(200)
+  //                       .withHeader("Content-Type", "application/json")
+  //                       .withBody("{\"choices\":[{\"message\":{\"content\":\"This is a mocked
+  // OpenAI response.\"}}]}"))); // Direkte JSON-Antwort
+
+  //   String actualResponse = p2tllmService.callLLM(requestBody, dto);
+
+  //   assertNotNull(actualResponse);
+  //   assertEquals("This is a mocked OpenAI response.", actualResponse); // Überprüfe den Inhalt
+  // der gemockten Antwort
+
+  // }
 }

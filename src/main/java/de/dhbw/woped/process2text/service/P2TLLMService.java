@@ -111,7 +111,7 @@ public class P2TLLMService {
    * @param openAiApiDTO Contains the API key, Gemini model, and prompt.
    * @return the api call for Gemini.
    */
-  public String createCallGemini(String body, OpenAiApiDTO dto) {
+  private String createCallGemini(String body, OpenAiApiDTO dto) {
     Client client = Client.builder().apiKey(dto.getApiKey()).build();
     GenerateContentConfig config =
         GenerateContentConfig.builder().temperature((float) 0.7).maxOutputTokens(4096).build();
