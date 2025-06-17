@@ -68,7 +68,6 @@ public class P2TController {
         provider,
         body.replaceAll("[\n\r\t]", "_"));
 
-
     OpenAiApiDTO openAiApiDTO;
     if (provider.equalsIgnoreCase("lmStudio")) {
 
