@@ -3,12 +3,15 @@ package de.dhbw.woped.process2text.controller;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import de.dhbw.woped.process2text.service.P2TLLMService;
 import de.dhbw.woped.process2text.service.P2TService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,6 +29,14 @@ public class P2TController {
   @Autowired private P2TService p2tService;
   @Autowired private P2TLLMService llmService;
 
+  @Autowired
+  @Qualifier("httpRequestsTotal")
+  private Counter httpRequestsTotal;
+
+  @Autowired
+  @Qualifier("httpRequestDuration")
+  private Timer httpRequestDuration;
+
   /**
    * Endpoint to translate a process model into human-readable text.
    *
@@ -35,12 +46,16 @@ public class P2TController {
   @ApiOperation(value = "Translate a process model into human readable text.")
   @PostMapping(value = "/generateText", consumes = "text/plain", produces = "text/plain")
   protected String generateText(@RequestBody String body) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Received body: " + body.replaceAll("[\n\r\t]", "_"));
-    }
-    String response = p2tService.generateText(body);
-    logger.debug("Response: " + response);
-    return response;
+    httpRequestsTotal.increment();
+    return httpRequestDuration.record(
+        () -> {
+          if (logger.isDebugEnabled()) {
+            logger.debug("Received body: " + body.replaceAll("[\n\r\t]", "_"));
+          }
+          String response = p2tService.generateText(body);
+          logger.debug("Response: " + response);
+          return response;
+        });
   }
 
   /**
@@ -55,28 +70,32 @@ public class P2TController {
    */
   @ApiOperation(
       value =
-          "Translate a process model into human readable text using one of OpenAIs Large Language Models")
+          "Translate a process model into human readable text using one of OpenAIs Large Language"
+              + " Models")
   @PostMapping(value = "/generateTextLLM", consumes = "text/plain", produces = "text/plain")
   protected String generateTextLLM(
       @RequestBody String body,
       @RequestParam(required = true) String apiKey,
       @RequestParam(required = true) String prompt,
       @RequestParam(required = true) String gptModel) {
-    logger.debug(
-        "Received request with apiKey: {}, prompt: {}, gptModel: {}, body: {}",
-        apiKey,
-        prompt,
-        gptModel,
-        body.replaceAll("[\n\r\t]", "_"));
-    OpenAiApiDTO openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, prompt);
-    try {
-      String response = llmService.callLLM(body, openAiApiDTO);
-      logger.debug("LLM Response: " + response);
-      return response;
-    } catch (ResponseStatusException e) {
-      logger.error("Error processing LLM request", e);
-      throw e;
-    }
+    httpRequestsTotal.increment();
+    return httpRequestDuration.record(
+        () -> {
+          logger.debug(
+              "Received request with prompt: {}, gptModel: {}, body: {}",
+              prompt,
+              gptModel,
+              body.replaceAll("[\n\r\t]", "_"));
+          OpenAiApiDTO openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, prompt);
+          try {
+            String response = llmService.callLLM(body, openAiApiDTO);
+            logger.debug("LLM Response: " + response);
+            return response;
+          } catch (ResponseStatusException e) {
+            logger.error("Error processing LLM request", e);
+            throw e;
+          }
+        });
   }
 
   /**
@@ -87,6 +106,7 @@ public class P2TController {
    */
   @GetMapping("/gptModels")
   public List<String> getGptModels(@RequestParam(required = true) String apiKey) {
-    return llmService.getGptModels(apiKey);
+    httpRequestsTotal.increment();
+    return httpRequestDuration.record(() -> llmService.getGptModels(apiKey));
   }
 }
