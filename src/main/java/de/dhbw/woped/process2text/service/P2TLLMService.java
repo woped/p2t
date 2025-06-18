@@ -83,7 +83,10 @@ public class P2TLLMService {
    */
   private String createCallOpenAi(String body, OpenAiApiDTO dto) {
 
-    OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(dto.getApiKey()).build();
+    String url = System.getProperty("openai.api.url", "https://api.openai.com/v1");
+
+    OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(dto.getApiKey()).baseUrl(url).build();
+
 
     ChatCompletionCreateParams createParams =
         ChatCompletionCreateParams.builder()
