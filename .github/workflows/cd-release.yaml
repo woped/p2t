@@ -26,7 +26,7 @@ jobs:
       RELEASE_NOTES: ${{ needs.semver.outputs.RELEASE_NOTES }}
 
   docker_build_and_push:
-    uses: woped/devops/.github/workflows/docker-build-and-push.yaml@main
+    uses: woped/devops/.github/workflows/docker-build-and-push-maven.yaml@main
     needs: [ semver, approval ]
     with:
       version: ${{ needs.semver.outputs.VERSION }}
