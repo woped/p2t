@@ -3,6 +3,8 @@ package de.dhbw.woped.process2text.controller;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import de.dhbw.woped.process2text.service.P2TLLMService;
 import de.dhbw.woped.process2text.service.P2TService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,6 +34,14 @@ public class P2TController {
   @Autowired private P2TService p2tService;
   @Autowired private P2TLLMService llmService;
 
+  @Autowired
+  @Qualifier("httpRequestsTotal")
+  private Counter httpRequestsTotal;
+
+  @Autowired
+  @Qualifier("httpRequestDuration")
+  private Timer httpRequestDuration;
+
   /**
    * Endpoint to translate a process model into human-readable text.
    *
@@ -40,12 +51,16 @@ public class P2TController {
   @ApiOperation(value = "Translate a process model into human readable text.")
   @PostMapping(value = "/generateText", consumes = "text/plain", produces = "text/plain")
   protected String generateText(@RequestBody String body) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Received body: " + body.replaceAll("[\n\r\t]", "_"));
-    }
-    String response = p2tService.generateText(body);
-    logger.debug("Response: " + response);
-    return response;
+    httpRequestsTotal.increment();
+    return httpRequestDuration.record(
+        () -> {
+          if (logger.isDebugEnabled()) {
+            logger.debug("Received body: " + body.replaceAll("[\n\r\t]", "_"));
+          }
+          String response = p2tService.generateText(body);
+          logger.debug("Response: " + response);
+          return response;
+        });
   }
 
   /**
@@ -135,6 +150,7 @@ public class P2TController {
    */
   @GetMapping("/gptModels")
   public List<String> getGptModels(@RequestParam(required = true) String apiKey) {
-    return llmService.getGptModels(apiKey);
+    httpRequestsTotal.increment();
+    return httpRequestDuration.record(() -> llmService.getGptModels(apiKey));
   }
 }
