@@ -13,6 +13,7 @@ import com.openai.models.models.Model;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class TestLLM {
@@ -25,13 +26,13 @@ public class TestLLM {
 
     OpenAiApiDTO testDTOGemini =
         new OpenAiApiDTO("", "gemini-1.5-pro", "Count from 1 to 10", "gemini", false);
-    // System.out.println(callLLMGemini("Count from 1 to 10, just list the numbers, nothing else.",
-    // testDTOGemini));
+    System.out.println(
+        callLLMGemini("Count from 1 to 10, just list the numbers, nothing else.", testDTOGemini));
 
     OpenAiApiDTO testDTOlmStudio =
         new OpenAiApiDTO(null, "llama-3.2-1b-instruct", "Count from 1 to 10", "lmStudio", false);
 
-    System.out.println(getGptModels(testDTO.getApiKey()));
+    // System.out.println(getGptModels(testDTO.getApiKey()));
   }
 
   public static String callLLM(String body, OpenAiApiDTO openAiApiDTO) {
@@ -65,7 +66,10 @@ public class TestLLM {
   public static String callLLMGemini(String body, OpenAiApiDTO openAiApiDTO) {
     System.out.println("Versuche Verbindung mit API-Key: " + openAiApiDTO.getApiKey());
 
+    String url = System.getProperty("gemini.api.url", "https://generativelanguage.googleapis.com");
+
     Client client = Client.builder().apiKey(openAiApiDTO.getApiKey()).build();
+    Client.setDefaultBaseUrls(Optional.of(url), Optional.empty());
     GenerateContentConfig config =
         GenerateContentConfig.builder().temperature((float) 0.7).maxOutputTokens(4096).build();
 

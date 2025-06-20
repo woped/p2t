@@ -67,14 +67,31 @@ class Process2textApplicationTests {
 
   @Test
   void testCallLLMOpenAI() {
-    String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + //
-            "<bpmn2:definitions xmlns:bpmn2=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\" xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\" xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" id=\"empty-definitions\" targetNamespace=\"http://bpmn.io/schema/bpmn\">\n" + //
-            "  <bpmn2:collaboration id=\"Collaboration_id-12a40ec6-9fc5-4b12-aaa1-d8f8bc718b41\">\n" + //
-            "    <bpmn2:participant id=\"id-54d8a5a1-c344-492c-bf9f-b29ad9662303\" name=\"Customer\" processRef=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\" />\n" + //
-            "    <bpmn2:participant id=\"id-ba446fe3-fc5a-468a-879f-636efa8ae458\" name=\"Car Wash Machine\" processRef=\"Process_id-ba446fe3-fc5a-468a-879f-636efa8ae458\" />\n" + //
-            "  </bpmn2:collaboration>\n" + //
-            "  <bpmn2:process id=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\" name=\"Customer\" />\n" + //
-            "  <bpmn2:process id=\"Process_id-ba446fe3-fc5a-468a-879f-636efa8ae458\" name=\"Car Wash Machine\" />\n" + //
+    String body =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + //
+            "<bpmn2:definitions xmlns:bpmn2=\"http://www.omg.org/spec/BPMN/20100524/MODEL\""
+            + " xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\""
+            + " xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\""
+            + " xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" id=\"empty-definitions\""
+            + " targetNamespace=\"http://bpmn.io/schema/bpmn\">\n"
+            + //
+            "  <bpmn2:collaboration id=\"Collaboration_id-12a40ec6-9fc5-4b12-aaa1-d8f8bc718b41\">\n"
+            + //
+            "    <bpmn2:participant id=\"id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+          + " name=\"Customer\" processRef=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\" />\n"
+            + //
+            "    <bpmn2:participant id=\"id-ba446fe3-fc5a-468a-879f-636efa8ae458\" name=\"Car Wash"
+            + " Machine\" processRef=\"Process_id-ba446fe3-fc5a-468a-879f-636efa8ae458\" />\n"
+            + //
+            "  </bpmn2:collaboration>\n"
+            + //
+            "  <bpmn2:process id=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " name=\"Customer\" />\n"
+            + //
+            "  <bpmn2:process id=\"Process_id-ba446fe3-fc5a-468a-879f-636efa8ae458\" name=\"Car"
+            + " Wash Machine\" />\n"
+            + //
             "</bpmn2:definitions>";
     OpenAiApiDTO dto =
         new OpenAiApiDTO(
@@ -98,5 +115,67 @@ class Process2textApplicationTests {
 
     assertNotNull(actualResponse);
     assertEquals("This is a mocked OpenAI response.", actualResponse);
+  }
+
+  @Test
+  void testCallLLMGemini() {
+    String body =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + //
+            "            <bpmn2:definitions"
+            + " xmlns:bpmn2=\"http://www.omg.org/spec/BPMN/20100524/MODEL\""
+            + " xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\""
+            + " xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\""
+            + " xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" id=\"empty-definitions\""
+            + " targetNamespace=\"http://bpmn.io/schema/bpmn\">\n"
+            + //
+            "              <bpmn2:collaboration"
+            + " id=\"Collaboration_id-12a40ec6-9fc5-4b12-aaa1-d8f8bc718b41\">\n"
+            + //
+            "                <bpmn2:participant id=\"id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+          + " name=\"Customer\" processRef=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\" />\n"
+            + //
+            "                <bpmn2:participant id=\"id-ba446fe3-fc5a-468a-879f-636efa8ae458\""
+            + " name=\"Car Wash Machine\""
+            + " processRef=\"Process_id-ba446fe3-fc5a-468a-879f-636efa8ae458\" />\n"
+            + //
+            "              </bpmn2:collaboration>\n"
+            + //
+            "              <bpmn2:process id=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " name=\"Customer\" />\n"
+            + //
+            "              <bpmn2:process id=\"Process_id-ba446fe3-fc5a-468a-879f-636efa8ae458\""
+            + " name=\"Car Wash Machine\" />\n"
+            + //
+            "</bpmn2:definitions>";
+
+    OpenAiApiDTO dto =
+        new OpenAiApiDTO(
+            "your-gemini-api-key",
+            "gemini-1.5-flash",
+            "Summarize the following text:",
+            "gemini",
+            true);
+
+    System.setProperty("gemini.api.url", wiremockBaseUrl);
+
+    stubFor(
+        post(urlPathEqualTo("/v1beta/models/gemini-1.5-flash:generateContent"))
+            .withHeader("X-Goog-Api-Key", equalTo(dto.getApiKey()))
+            .withHeader("Content-Type", equalTo("application/json"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"This is a mocked"
+                            + " Gemini"
+                            + " response.\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0,\"safetyRatings\":[]}]}")));
+
+    String actualResponse =
+        p2tllmService.callLLM(body, dto); // callLLM should use the configured base URL
+
+    assertNotNull(actualResponse);
+    assertEquals("This is a mocked Gemini response.", actualResponse);
   }
 }

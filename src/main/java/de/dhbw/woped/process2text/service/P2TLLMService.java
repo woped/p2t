@@ -13,6 +13,7 @@ import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -114,7 +115,13 @@ public class P2TLLMService {
    * @return the api call for Gemini.
    */
   private String createCallGemini(String body, OpenAiApiDTO dto) {
+
+    String url = System.getProperty("gemini.api.url", "https://generativelanguage.googleapis.com");
+
+    Client.setDefaultBaseUrls(Optional.of(url), Optional.empty());
+
     Client client = Client.builder().apiKey(dto.getApiKey()).build();
+
     GenerateContentConfig config =
         GenerateContentConfig.builder().temperature((float) 0.7).maxOutputTokens(4096).build();
 
