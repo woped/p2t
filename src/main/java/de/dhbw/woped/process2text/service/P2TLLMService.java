@@ -87,7 +87,6 @@ public class P2TLLMService {
 
     OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(dto.getApiKey()).baseUrl(url).build();
 
-
     ChatCompletionCreateParams createParams =
         ChatCompletionCreateParams.builder()
             .model(dto.getGptModel())

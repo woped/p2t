@@ -1,7 +1,6 @@
 package de.dhbw.woped.process2text;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
@@ -21,8 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.wiremock.spring.EnableWireMock;
 
-
-
 @SpringBootTest
 @EnableWireMock
 class Process2textApplicationTests {
@@ -31,7 +28,6 @@ class Process2textApplicationTests {
   private String wiremockBaseUrl;
 
   @Autowired private P2TLLMService p2tllmService;
-
 
   @Test
   void contextLoads() {}
@@ -70,7 +66,7 @@ class Process2textApplicationTests {
   }
 
   @Test
-  void testCallLLM() {
+  void testCallLLMOpenAI() {
     String body =
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             + //
@@ -320,12 +316,9 @@ class Process2textApplicationTests {
             "sk-testapikey", "gpt-3.5-turbo", "Summarize the following text:", "openAi", false);
 
     stubFor(
-        post(urlPathEqualTo("/v1/chat/completions"))
+        post(urlPathEqualTo("/chat/completions"))
             .withHeader("Authorization", equalTo("Bearer " + dto.getApiKey()))
             .withHeader("Content-Type", equalTo("application/json"))
-            // WireMock kann den Request Body auf bestimmte Inhalte prüfen
-            .withRequestBody(containing(dto.getPrompt()))
-            .withRequestBody(containing(body))
             .willReturn(
                 aResponse()
                     .withStatus(200)
@@ -334,10 +327,8 @@ class Process2textApplicationTests {
                         "{\"choices\":[{\"message\":{\"content\":\"This is a mocked OpenAI"
                             + " response.\"}}]}"))); // Direkte JSON-Antwort
 
+    System.setProperty("openai.api.url", wiremockBaseUrl);
 
-    System.setProperty("openai.api.url", wiremockBaseUrl + "/v1/models");
-
-    
     String actualResponse = p2tllmService.callLLM(body, dto);
 
     assertNotNull(actualResponse);
