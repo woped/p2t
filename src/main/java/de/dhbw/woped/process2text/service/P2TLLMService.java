@@ -143,41 +143,7 @@ public class P2TLLMService {
    * @return The generated response from the LM Studio model.
    */
   private String createCallLmStudio(String body, OpenAiApiDTO dto) {
-    try {
-      // First try the standard chat completions approach
-      return callLmStudioStandard("http://localhost:1234/v1/chat/completions", body, dto);
-    } catch (Exception e) {
-      logger.warn("Standard LM Studio chat request failed. Trying alternative approach.", e);
-      try {
-        // If that fails, try the alternative JSON string approach for chat
-        return createCallLmStudioAlternative(body, dto);
-      } catch (Exception alternativeError) {
-        logger.warn(
-            "Alternative LM Studio chat request failed. Trying completions endpoint.",
-            alternativeError);
-        try {
-          // If both chat approaches fail, try the completions endpoint
-          return callLmStudioCompletions(body, dto);
-        } catch (Exception completionsError) {
-          logger.error("All LM Studio request approaches failed", completionsError);
-          throw new ResponseStatusException(
-              HttpStatus.INTERNAL_SERVER_ERROR,
-              "LM Studio request failed after trying all approaches: " + e.getMessage(),
-              e);
-        }
-      }
-    }
-  }
-
-  /**
-   * Standard approach for calling LM Studio using the map-based request body.
-   *
-   * @param apiUrl The LM Studio API endpoint.
-   * @param body The text to be sent to the LM Studio API.
-   * @param dto Contains the GPT model and prompt.
-   * @return The generated response from the LM Studio model.
-   */
-  private String callLmStudioStandard(String apiUrl, String body, OpenAiApiDTO dto) {
+    String apiUrl = "http://localhost:1234/v1/chat/completions"; // Default LM Studio API endpoint
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.set("Content-Type", "application/json");
@@ -209,98 +175,19 @@ public class P2TLLMService {
     // Log the request for debugging
     logger.info("Sending request to LM Studio: {}", requestBody);
 
-    // Send the request and get the raw response
-    String response = restTemplate.postForObject(apiUrl, entity, String.class);
-    logger.info("LM Studio raw response: {}", response);
+    try {
+      // Send the request and get the raw response
+      String response = restTemplate.postForObject(apiUrl, entity, String.class);
+      logger.info("LM Studio raw response: {}", response);
 
-    return extractTextContent(response);
-  }
-
-  /**
-   * Alternative implementation for calling LM Studio using a direct JSON string approach. This
-   * method is used as a fallback if the standard approach fails.
-   *
-   * @param body The text to be sent to the LM Studio API.
-   * @param dto Contains the GPT model and prompt.
-   * @return The generated response from the LM Studio model.
-   */
-  private String createCallLmStudioAlternative(String body, OpenAiApiDTO dto) {
-    String apiUrl = "http://localhost:1234/v1/chat/completions"; // Default LM Studio API endpoint
-
-    RestTemplate restTemplate = new RestTemplate();
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("Content-Type", "application/json");
-
-    // Determine role for the first message based on the model
-    String firstRole = dto.getGptModel().toLowerCase().contains("mistral") ? "assistant" : "system";
-
-    // Escape special characters in the content
-    String safePrompt =
-        dto.getPrompt().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
-    String safeBody = body.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
-
-    // Simplified approach - create a direct JSON string for the request
-    String requestJson =
-        String.format(
-            "{\"model\":\"%s\",\"messages\":[{\"role\":\"%s\",\"content\":\"You are a helpful"
-                + " assistant.\"},{\"role\":\"user\",\"content\":\"%s\\n"
-                + "\\n"
-                + "%s\"}],\"max_tokens\":4096,\"temperature\":0.7,\"stream\":false}",
-            dto.getGptModel(), firstRole, safePrompt, safeBody);
-
-    HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
-
-    // Log the request for debugging
-    logger.info("Sending alternative request to LM Studio: {}", requestJson);
-
-    // Send the request and get the raw response
-    String response = restTemplate.postForObject(apiUrl, entity, String.class);
-    logger.info("LM Studio raw response: {}", response);
-
-    return extractTextContent(response);
-  }
-
-  /**
-   * Fallback approach for calling LM Studio using the completions endpoint instead of the chat
-   * endpoint.
-   *
-   * @param body The text to be sent to the LM Studio API.
-   * @param dto Contains the GPT model and prompt.
-   * @return The generated response from the LM Studio model.
-   */
-  private String callLmStudioCompletions(String body, OpenAiApiDTO dto) {
-    String apiUrl = "http://localhost:1234/v1/completions"; // LM Studio completions endpoint
-
-    RestTemplate restTemplate = new RestTemplate();
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("Content-Type", "application/json");
-
-    // Create a prompt that mimics a chat interaction
-    String fullPrompt =
-        "You are a helpful assistant.\n\nUser: "
-            + dto.getPrompt()
-            + "\n\n"
-            + body
-            + "\n\nAssistant:";
-
-    // Create the request body for completions
-    Map<String, Object> requestBody = new java.util.LinkedHashMap<>();
-    requestBody.put("model", dto.getGptModel());
-    requestBody.put("prompt", fullPrompt);
-    requestBody.put("max_tokens", -1);
-    requestBody.put("temperature", 0.7);
-    requestBody.put("stream", false);
-
-    HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-    // Log the request for debugging
-    logger.info("Sending completions request to LM Studio: {}", requestBody);
-
-    // Send the request and get the raw response
-    String response = restTemplate.postForObject(apiUrl, entity, String.class);
-    logger.info("LM Studio completions raw response: {}", response);
-
-    return extractTextContent(response);
+      return extractContentFromLmStudioResponse(response);
+    } catch (HttpClientErrorException e) {
+      logger.error("Error calling LM Studio API: {}", e.getResponseBodyAsString());
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "LM Studio API error", e);
+    } catch (Exception e) {
+      logger.error("Unexpected error when calling LM Studio API", e);
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "LM Studio error", e);
+    }
   }
 
   /**
@@ -354,52 +241,35 @@ public class P2TLLMService {
         return content;
       }
 
+      // If JSON parsing fails, try to extract text content between quotes
+      if (response.contains("\"content\":")) {
+        int startIndex = response.indexOf("\"content\":") + "\"content\":".length();
+        if (response.substring(startIndex).contains("\"")) {
+          startIndex = response.indexOf("\"", startIndex) + 1;
+          int endIndex = response.indexOf("\"", startIndex);
+          if (endIndex > startIndex) {
+            String content = response.substring(startIndex, endIndex);
+            logger.info("Extracted content using string parsing: {}", content);
+            return content;
+          }
+        }
+      }
+
       // If we can't find the content in the expected format, log the response and throw an error
       logger.error("Unexpected response format from LM Studio: {}", response);
       throw new ResponseStatusException(
           HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected response format from LM Studio");
     } catch (JSONException e) {
       logger.error("Error parsing LM Studio API response: {}", response, e);
+
+      // If JSON parsing fails, just return the raw response
+      if (response != null && !response.isEmpty()) {
+        logger.warn("Returning raw response due to parsing error");
+        return "Raw response: " + response;
+      }
+
       throw new ResponseStatusException(
           HttpStatus.INTERNAL_SERVER_ERROR, "Error parsing LM Studio API response", e);
-    }
-  }
-
-  /**
-   * A last-resort method to extract text content from a response that might not be valid JSON. This
-   * tries to handle cases where the server returns malformed JSON or plain text.
-   *
-   * @param response The raw response from the LM Studio API.
-   * @return The extracted content or the original response if extraction fails.
-   */
-  private String extractTextContent(String response) {
-    try {
-      // Try to extract from JSON first
-      return extractContentFromLmStudioResponse(response);
-    } catch (Exception e) {
-      logger.warn("Failed to parse as JSON, attempting raw text extraction", e);
-
-      // If JSON parsing fails, try to extract any text content between quotes
-      try {
-        // Look for common patterns like "content": "some text"
-        if (response.contains("\"content\":")) {
-          int startIndex = response.indexOf("\"content\":") + "\"content\":".length();
-          if (response.substring(startIndex).contains("\"")) {
-            startIndex = response.indexOf("\"", startIndex) + 1;
-            int endIndex = response.indexOf("\"", startIndex);
-            if (endIndex > startIndex) {
-              return response.substring(startIndex, endIndex);
-            }
-          }
-        }
-
-        // If that fails, just return the raw response with a note
-        logger.warn("Unable to extract structured content, returning raw response");
-        return "Raw response (parsing failed): " + response;
-      } catch (Exception textExtractionError) {
-        logger.error("Text extraction also failed", textExtractionError);
-        return response; // Return the raw response as a last resort
-      }
     }
   }
 
@@ -477,27 +347,45 @@ public class P2TLLMService {
   }
 
   /**
-   * Retrieves the list of available models from the LM Studio API. First tries the new API endpoint
-   * format, and falls back to legacy format if needed.
+   * Retrieves the list of available models from the LM Studio API.
    *
    * @return A list of model names as strings.
    */
   public List<String> getLmStudioModels() {
+    String url = "http://localhost:1234/v1/models";
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    HttpEntity<String> entity = new HttpEntity<>(headers);
     List<String> models = new ArrayList<>();
 
     try {
-      // First try the v0 API endpoint
-      models = getLmStudioModelsV0();
+      String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+      JSONObject jsonResponse = new JSONObject(response);
+      JSONArray modelsArray = jsonResponse.getJSONArray("data");
+
+      models =
+          modelsArray.toList().stream()
+              .map(model -> ((Map<String, Object>) model).get("id").toString())
+              .collect(Collectors.toList());
     } catch (Exception e) {
       logger.warn(
-          "Error retrieving models from LM Studio API v0 endpoint. Trying alternative endpoint.",
-          e);
+          "Error retrieving models from LM Studio API standard endpoint, trying v0 endpoint", e);
+
       try {
-        // If that fails, try the legacy endpoint
-        models = getLmStudioModelsLegacy();
+        // Try alternative endpoint
+        url = "http://localhost:1234/api/v0/models";
+        String response =
+            restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+        JSONObject jsonResponse = new JSONObject(response);
+        JSONArray modelsArray = jsonResponse.getJSONArray("data");
+
+        models =
+            modelsArray.toList().stream()
+                .map(model -> ((Map<String, Object>) model).get("id").toString())
+                .collect(Collectors.toList());
       } catch (Exception alternativeError) {
-        logger.error("Both LM Studio model retrieval approaches failed", alternativeError);
-        // Return a default list with a placeholder so the UI doesn't break
+        logger.error("Error retrieving models from LM Studio API", alternativeError);
+        // Add a placeholder model so the UI doesn't break
         models.add("Model loading failed - check LM Studio server");
       }
     }
@@ -509,43 +397,4 @@ public class P2TLLMService {
 
     return models;
   }
-
-  /** Retrieves models using the v0 API endpoint. */
-  private List<String> getLmStudioModelsV0() {
-    String url = "http://localhost:1234/api/v0/models";
-    RestTemplate restTemplate = new RestTemplate();
-    HttpHeaders headers = new HttpHeaders();
-    HttpEntity<String> entity = new HttpEntity<>(headers);
-
-    String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
-    JSONObject jsonResponse = new JSONObject(response);
-    JSONArray models = jsonResponse.getJSONArray("data");
-
-    return models.toList().stream()
-        .map(model -> ((Map<String, Object>) model).get("id").toString())
-        .collect(Collectors.toList());
-  }
-
-  /** Retrieves models using the legacy API endpoint that mimics OpenAI format. */
-  private List<String> getLmStudioModelsLegacy() {
-    String url = "http://localhost:1234/v1/models";
-    RestTemplate restTemplate = new RestTemplate();
-    HttpHeaders headers = new HttpHeaders();
-    HttpEntity<String> entity = new HttpEntity<>(headers);
-
-    String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
-    JSONObject jsonResponse = new JSONObject(response);
-    JSONArray models = jsonResponse.getJSONArray("data");
-
-    return models.toList().stream()
-        .map(model -> ((Map<String, Object>) model).get("id").toString())
-        .collect(Collectors.toList());
-  }
-
-  /**
-   * Parses the response from the OpenAI API to extract the content.
-   *
-   * @param response The raw JSON response from the OpenAI API.
-   * @return The extracted content from the response.
-   */
 }
