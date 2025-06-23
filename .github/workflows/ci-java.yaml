@@ -11,10 +11,14 @@ jobs:
     uses: woped/devops/.github/workflows/validate-commit-msg.yaml@main
 
   linting:
-   uses: woped/devops/.github/workflows/linting.yaml@main
+    uses: woped/devops/.github/workflows/linting.yaml@main
   testing_maven:
     uses: woped/devops/.github/workflows/testing_maven.yaml@main
+    with:
+      java_version: '21'
   sonar_maven:
     needs: testing_maven
     uses: woped/devops/.github/workflows/sonar_maven.yaml@main
+    with:
+      java_version: '21'
     secrets: inherit
