@@ -104,7 +104,7 @@ public class P2TController {
       default:
         throw new ResponseStatusException(
             HttpStatus.BAD_REQUEST,
-            "Invalid provider. Supported providers are: 'gemini' and 'openai'");
+            "Invalid provider. Supported providers are: 'gemini', 'openAi', 'lmStudio' ");
     }
   }
 }
