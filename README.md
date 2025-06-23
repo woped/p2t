@@ -94,4 +94,4 @@ the folder `lib`. The chosen procedure was described in this [SO answer](https:/
 
 # Formatting
 To check the formatting of all Java files, run `mvn spotless:check`. <br>
-If formatting are identified, run `mvn spotless:apply` to automatically reformat that affected files.
+If formatting are identified, run `mvn spotless:apply` to automatically reformat that affected files. 
