@@ -13,8 +13,7 @@ import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -84,7 +83,9 @@ public class P2TLLMService {
    */
   private String createCallOpenAi(String body, OpenAiApiDTO dto) {
 
-    OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(dto.getApiKey()).build();
+    String url = System.getProperty("openai.api.url", "https://api.openai.com/v1");
+
+    OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(dto.getApiKey()).baseUrl(url).build();
 
     ChatCompletionCreateParams createParams =
         ChatCompletionCreateParams.builder()
@@ -112,8 +113,14 @@ public class P2TLLMService {
    * @param openAiApiDTO Contains the API key, Gemini model, and prompt.
    * @return the api call for Gemini.
    */
-  public String createCallGemini(String body, OpenAiApiDTO dto) {
+  private String createCallGemini(String body, OpenAiApiDTO dto) {
+
+    String url = System.getProperty("gemini.api.url", "https://generativelanguage.googleapis.com");
+
+    Client.setDefaultBaseUrls(Optional.of(url), Optional.empty());
+
     Client client = Client.builder().apiKey(dto.getApiKey()).build();
+
     GenerateContentConfig config =
         GenerateContentConfig.builder().temperature((float) 0.7).maxOutputTokens(4096).build();
 
@@ -280,7 +287,7 @@ public class P2TLLMService {
    * @return A list of model names as strings.
    */
   public List<String> getGptModels(String apiKey) {
-    String url = "https://api.openai.com/v1/models";
+    String url = System.getProperty("openai.api.url", "https://api.openai.com/v1/models");
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", "Bearer " + apiKey);
@@ -290,9 +297,14 @@ public class P2TLLMService {
       String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
       JSONObject jsonResponse = new JSONObject(response);
       JSONArray models = jsonResponse.getJSONArray("data");
-      return models.toList().stream()
-          .map(model -> ((Map<String, Object>) model).get("id").toString())
-          .collect(Collectors.toList());
+      List<String> modelNames = new ArrayList<>();
+      for (int i = 0; i < models.length(); i++) {
+        JSONObject model = models.getJSONObject(i);
+        modelNames.add(model.getString("id"));
+      }
+
+      System.out.println("Verfügbare GPT Modelle: " + modelNames);
+      return modelNames;
     } catch (HttpClientErrorException e) {
       logger.error("Error retrieving models from OpenAI API: {}", e.getResponseBodyAsString());
       throw new ResponseStatusException(
@@ -314,14 +326,17 @@ public class P2TLLMService {
    * @return A list of model names as strings.
    */
   public List<String> getGeminiModels(String apiKey) {
-    String url = "https://generativelanguage.googleapis.com/v1beta/models";
+    String baseUrl =
+        System.getProperty(
+            "gemini.api.url", "https://generativelanguage.googleapis.com/v1beta/models");
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.set("X-Goog-Api-Key", apiKey);
     HttpEntity<String> entity = new HttpEntity<>(headers);
 
     try {
-      String response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+      String response =
+          restTemplate.exchange(baseUrl, HttpMethod.GET, entity, String.class).getBody();
       JSONObject jsonResponse = new JSONObject(response);
       JSONArray models = jsonResponse.getJSONArray("models");
       List<String> modelNames = new ArrayList<>();

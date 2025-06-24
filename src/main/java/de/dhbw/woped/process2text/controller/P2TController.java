@@ -61,10 +61,11 @@ public class P2TController {
       @RequestParam(required = true) String provider,
       @RequestParam(required = false, defaultValue = "false") boolean useRag) {
     logger.debug(
-        "Received request with apiKey: {}, prompt: {}, gptModel: {}, body: {}",
+        "Received request with apiKey: {}, prompt: {}, gptModel: {}, provider: {}, body: {}",
         apiKey,
         prompt,
         gptModel,
+        provider,
         body.replaceAll("[\n\r\t]", "_"));
 
     OpenAiApiDTO openAiApiDTO;
@@ -93,9 +94,9 @@ public class P2TController {
    */
   @GetMapping("/gptModels")
   public List<String> getGptModels(
-      @RequestParam(required = true) String apiKey,
+      @RequestParam(required = false) String apiKey,
       @RequestParam(required = true) String provider) {
-    switch (provider.toLowerCase()) {
+    switch (provider) {
       case "gemini":
         return llmService.getGeminiModels(apiKey);
       case "openai":
