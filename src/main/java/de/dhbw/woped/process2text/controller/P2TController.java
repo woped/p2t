@@ -96,7 +96,7 @@ public class P2TController {
   public List<String> getGptModels(
       @RequestParam(required = false) String apiKey,
       @RequestParam(required = true) String provider) {
-    switch (provider) {
+    switch (provider.toLowerCase()) {
       case "gemini":
         return llmService.getGeminiModels(apiKey);
       case "openai":
