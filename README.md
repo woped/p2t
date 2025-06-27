@@ -111,12 +111,19 @@ If formatting are identified, run `mvn spotless:apply` to automatically reformat
 3. **Download and load a model**:
    - In LM Studio, navigate to the "Models" section.
    - Choose a model to download or import an already downloaded model.
-   - 
+      <br>
+      <img src="docs/images/Bildschirmfoto%202025-06-27%20um%2011.26.43.png" alt="LM Studio Model Selection" width="400"/>
+   - Ensure the context length is set correctly, 10 000 tokens suits most cases, then load the model.
+      <br>
+      <img src="docs/images/Bildschirmfoto%202025-06-27%20um%2011.21.19.png" alt="LM Studio Model Download" width="400"/>
    - Start the local server with the loaded model by clicking "Start Server".
 
 4. **Verify the server is running**:
    - The LM Studio server should be running on `http://localhost:1234` by default.
+      <br>
+      <img src="docs/images/Bildschirmfoto%202025-06-27%20um%2011.28.55.png" alt="LM Studio Model Download" width="400"/>
    - You can test the API availability by accessing `http://localhost:1234/v1/models` in your browser.
+
 
 ## Using with WoPeD
 
