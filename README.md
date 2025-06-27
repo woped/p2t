@@ -95,3 +95,43 @@ the folder `lib`. The chosen procedure was described in this [SO answer](https:/
 # Formatting
 To check the formatting of all Java files, run `mvn spotless:check`. <br>
 If formatting are identified, run `mvn spotless:apply` to automatically reformat that affected files.
+
+# LM Studio Integration
+
+## LM Studio Setup
+
+1. **Download LM Studio**:
+   - Visit the official [LM Studio website](https://lmstudio.ai/) and download the latest version for your operating system.
+   - Alternatively, you can download LM Studio from [GitHub](https://github.com/lmstudio-ai).
+
+2. **Install and launch LM Studio**:
+   - Run the downloaded installation file and follow the instructions.
+   - Launch LM Studio after installation.
+
+3. **Download and load a model**:
+   - In LM Studio, navigate to the "Models" section.
+   - Choose a model to download or import an already downloaded model.
+   - 
+   - Start the local server with the loaded model by clicking "Start Server".
+
+4. **Verify the server is running**:
+   - The LM Studio server should be running on `http://localhost:1234` by default.
+   - You can test the API availability by accessing `http://localhost:1234/v1/models` in your browser.
+
+## Using with WoPeD
+
+1. **Configure the web client**:
+   - Start this P2T service and for example the web client.
+   - Navigate to "P2T (Process2Text)".
+   - Select "lmStudio" as the provider.
+   - No API key is needed for LM Studio since it runs locally.
+
+2. **Use Process2Text with LM Studio**:
+   - Select "lmStudio" as the provider.
+   - Choose the desired model from the dropdown list.
+   - Execute the translation.
+
+3. **Troubleshooting**:
+   - Ensure the LM Studio server is running before starting a translation.
+   - If no models are displayed, verify that LM Studio was started correctly and a model is loaded.
+   - For connection issues, check if the default URL `http://localhost:1234` is accessible.
