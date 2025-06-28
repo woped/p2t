@@ -40,6 +40,21 @@ public class P2TLLMServiceTest {
     }
   }
 
+  @Test
+  void testLmStudioUrlCleaning() {
+    assertEquals("http://localhost:1234", cleanUrl("http://localhost:1234/v1/chat/completions"));
+    assertEquals("http://localhost:1234", cleanUrl("http://localhost:1234"));
+    assertEquals("https://example.com:8080", cleanUrl("https://example.com:8080/v1/chat/completions"));
+    assertEquals("http://localhost:1234/api", cleanUrl("http://localhost:1234/api"));
+  }
+
+  private String cleanUrl(String url) {
+    if (url.endsWith("/v1/chat/completions")) {
+      return url.replace("/v1/chat/completions", "");
+    }
+    return url;
+  }
+
   private void writeToFile(String path, String content) {
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
       writer.write(content);
