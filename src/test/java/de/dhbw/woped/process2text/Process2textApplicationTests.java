@@ -9,6 +9,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.web.server.ResponseStatusException;
 import org.wiremock.spring.EnableWireMock;
 
 @SpringBootTest
@@ -177,5 +179,234 @@ class Process2textApplicationTests {
 
     assertNotNull(actualResponse);
     assertEquals("This is a mocked Gemini response.", actualResponse);
+  }
+
+  // ===================== LM Studio WireMock Tests =====================
+
+  @Test
+  void testCallLLMLmStudio() {
+    // Set LM Studio API URL to WireMock server for testing
+    System.setProperty("lmstudio.api.url", wiremockBaseUrl + "/v1/chat/completions");
+
+    String body =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<bpmn2:definitions xmlns:bpmn2=\"http://www.omg.org/spec/BPMN/20100524/MODEL\""
+            + " xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\""
+            + " xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\""
+            + " xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" id=\"empty-definitions\""
+            + " targetNamespace=\"http://bpmn.io/schema/bpmn\">\n"
+            + "  <bpmn2:collaboration"
+            + " id=\"Collaboration_id-12a40ec6-9fc5-4b12-aaa1-d8f8bc718b41\">\n"
+            + "    <bpmn2:participant id=\"id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " name=\"Customer\" processRef=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " />\n"
+            + "  </bpmn2:collaboration>\n"
+            + "  <bpmn2:process id=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " name=\"Customer\" />\n"
+            + "</bpmn2:definitions>";
+    OpenAiApiDTO dto = new OpenAiApiDTO(null, "llama-3.2-1b", "Test prompt", "lmStudio", false);
+
+    stubFor(
+        post(urlPathEqualTo("/v1/chat/completions"))
+            .withHeader("Content-Type", equalTo("application/json"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        "{\"choices\":[{\"message\":{\"content\":\"This is a mocked LM Studio"
+                            + " response.\"}}]}")));
+
+    String actualResponse = p2tllmService.callLLM(body, dto);
+
+    assertNotNull(actualResponse);
+    assertEquals("This is a mocked LM Studio response.", actualResponse);
+
+    // Clean up
+    System.clearProperty("lmstudio.api.url");
+  }
+
+  @Test
+  void testCallLLMLmStudioAlternativeFormat() {
+    // Set LM Studio API URL to WireMock server for testing
+    System.setProperty("lmstudio.api.url", wiremockBaseUrl + "/v1/chat/completions");
+
+    String body =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<bpmn2:definitions xmlns:bpmn2=\"http://www.omg.org/spec/BPMN/20100524/MODEL\""
+            + " xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\""
+            + " xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\""
+            + " xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" id=\"empty-definitions\""
+            + " targetNamespace=\"http://bpmn.io/schema/bpmn\">\n"
+            + "  <bpmn2:collaboration"
+            + " id=\"Collaboration_id-12a40ec6-9fc5-4b12-aaa1-d8f8bc718b41\">\n"
+            + "    <bpmn2:participant id=\"id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " name=\"Customer\" processRef=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " />\n"
+            + "  </bpmn2:collaboration>\n"
+            + "  <bpmn2:process id=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " name=\"Customer\" />\n"
+            + "</bpmn2:definitions>";
+    OpenAiApiDTO dto = new OpenAiApiDTO(null, "mistral-7b", "Test prompt", "lmStudio", false);
+
+    // Test alternative response format (text field instead of message.content)
+    stubFor(
+        post(urlPathEqualTo("/v1/chat/completions"))
+            .willReturn(okJson("{\"choices\":[{\"text\":\"Alternative format response\"}]}")));
+
+    String actualResponse = p2tllmService.callLLM(body, dto);
+
+    assertNotNull(actualResponse);
+    assertEquals("Alternative format response", actualResponse);
+
+    // Clean up
+    System.clearProperty("lmstudio.api.url");
+  }
+
+  @Test
+  void testCallLLMLmStudioError() {
+    String body =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<bpmn2:definitions xmlns:bpmn2=\"http://www.omg.org/spec/BPMN/20100524/MODEL\""
+            + " xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\""
+            + " xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\""
+            + " xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" id=\"empty-definitions\""
+            + " targetNamespace=\"http://bpmn.io/schema/bpmn\">\n"
+            + "  <bpmn2:collaboration"
+            + " id=\"Collaboration_id-12a40ec6-9fc5-4b12-aaa1-d8f8bc718b41\">\n"
+            + "    <bpmn2:participant id=\"id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " name=\"Customer\" processRef=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " />\n"
+            + "  </bpmn2:collaboration>\n"
+            + "  <bpmn2:process id=\"Process_id-54d8a5a1-c344-492c-bf9f-b29ad9662303\""
+            + " name=\"Customer\" />\n"
+            + "</bpmn2:definitions>";
+    OpenAiApiDTO dto = new OpenAiApiDTO(null, "llama-3.2-1b", "Test prompt", "lmStudio", false);
+
+    stubFor(
+        post(urlPathEqualTo("/v1/chat/completions"))
+            .willReturn(aResponse().withStatus(500).withBody("Internal Server Error")));
+
+    assertThrows(
+        ResponseStatusException.class,
+        () -> {
+          p2tllmService.callLLM(body, dto);
+        });
+  }
+
+  // ===================== LM Studio Models WireMock Tests =====================
+
+  @Test
+  void testGetLmStudioModels() {
+    // Set LM Studio API URL to WireMock server for testing
+    System.setProperty("lmstudio.api.url", wiremockBaseUrl + "/v1/chat/completions");
+
+    stubFor(
+        get(urlPathEqualTo("/v1/models"))
+            .willReturn(okJson("{\"data\":[{\"id\":\"llama-3.2-1b\"},{\"id\":\"mistral-7b\"}]}")));
+
+    List<String> models = p2tllmService.getLmStudioModels();
+
+    assertNotNull(models);
+    assertEquals(2, models.size());
+    assertTrue(models.contains("llama-3.2-1b"));
+    assertTrue(models.contains("mistral-7b"));
+
+    // Clean up
+    System.clearProperty("lmstudio.api.url");
+  }
+
+  @Test
+  void testGetLmStudioModelsFallbackEndpoint() {
+    // Set LM Studio API URL to WireMock server for testing
+    System.setProperty("lmstudio.api.url", wiremockBaseUrl + "/v1/chat/completions");
+
+    // First endpoint fails
+    stubFor(
+        get(urlPathEqualTo("/v1/models"))
+            .willReturn(aResponse().withStatus(404).withBody("Not Found")));
+
+    // Fallback endpoint succeeds
+    stubFor(
+        get(urlPathEqualTo("/api/v0/models"))
+            .willReturn(okJson("{\"data\":[{\"id\":\"fallback-model\"}]}")));
+
+    List<String> models = p2tllmService.getLmStudioModels();
+
+    assertNotNull(models);
+    assertEquals(1, models.size());
+    assertTrue(models.contains("fallback-model"));
+
+    // Clean up
+    System.clearProperty("lmstudio.api.url");
+  }
+
+  @Test
+  void testGetLmStudioModelsAllEndpointsFail() {
+    // Set LM Studio API URL to WireMock server for testing
+    System.setProperty("lmstudio.api.url", wiremockBaseUrl + "/v1/chat/completions");
+
+    // Both endpoints fail
+    stubFor(
+        get(urlPathEqualTo("/v1/models"))
+            .willReturn(aResponse().withStatus(500).withBody("Server Error")));
+
+    stubFor(
+        get(urlPathEqualTo("/api/v0/models"))
+            .willReturn(aResponse().withStatus(500).withBody("Server Error")));
+
+    List<String> models = p2tllmService.getLmStudioModels();
+
+    assertNotNull(models);
+    assertEquals(1, models.size());
+    assertTrue(models.contains("Model loading failed - check LM Studio server"));
+
+    // Clean up
+    System.clearProperty("lmstudio.api.url");
+  }
+
+  @Test
+  void testCallLLMLmStudioContentFormat() {
+    // Set LM Studio API URL to WireMock server for testing
+    System.setProperty("lmstudio.api.url", wiremockBaseUrl + "/v1/chat/completions");
+
+    String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><test/>";
+    OpenAiApiDTO dto = new OpenAiApiDTO(null, "custom-model", "Test prompt", "lmStudio", false);
+
+    // Test direct content format
+    stubFor(
+        post(urlPathEqualTo("/v1/chat/completions"))
+            .willReturn(okJson("{\"choices\":[{\"content\":\"Direct content response\"}]}")));
+
+    String actualResponse = p2tllmService.callLLM(body, dto);
+
+    assertNotNull(actualResponse);
+    assertEquals("Direct content response", actualResponse);
+
+    // Clean up
+    System.clearProperty("lmstudio.api.url");
+  }
+
+  @Test
+  void testCallLLMLmStudioDeltaFormat() {
+    // Set LM Studio API URL to WireMock server for testing
+    System.setProperty("lmstudio.api.url", wiremockBaseUrl + "/v1/chat/completions");
+
+    String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><test/>";
+    OpenAiApiDTO dto = new OpenAiApiDTO(null, "streaming-model", "Test prompt", "lmStudio", false);
+
+    // Test delta format (streaming)
+    stubFor(
+        post(urlPathEqualTo("/v1/chat/completions"))
+            .willReturn(
+                okJson("{\"choices\":[{\"delta\":{\"content\":\"Delta streaming response\"}}]}")));
+
+    String actualResponse = p2tllmService.callLLM(body, dto);
+
+    assertNotNull(actualResponse);
+    assertEquals("Delta streaming response", actualResponse);
+
+    // Clean up
+    System.clearProperty("lmstudio.api.url");
   }
 }

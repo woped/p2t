@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -152,7 +151,9 @@ public class P2TLLMService {
    * @return The generated response from the LM Studio model.
    */
   private String createCallLmStudio(String body, OpenAiApiDTO dto) {
-    String apiUrl = "http://localhost:1234/v1/chat/completions"; // Default LM Studio API endpoint
+    // Allow URL override for testing (e.g., WireMock)
+    String apiUrl =
+        System.getProperty("lmstudio.api.url", "http://localhost:1234/v1/chat/completions");
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.set("Content-Type", "application/json");
@@ -369,7 +370,14 @@ public class P2TLLMService {
    * @return A list of model names as strings.
    */
   public List<String> getLmStudioModels() {
-    String url = "http://localhost:1234/v1/models";
+    // Allow URL override for testing (e.g., WireMock)
+    String baseUrl = System.getProperty("lmstudio.api.url", "http://localhost:1234");
+    // Handle both "/v1/chat/completions" and base URLs
+    if (baseUrl.endsWith("/v1/chat/completions")) {
+      baseUrl = baseUrl.replace("/v1/chat/completions", "");
+    }
+    String url = baseUrl + "/v1/models";
+
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -380,26 +388,28 @@ public class P2TLLMService {
       JSONObject jsonResponse = new JSONObject(response);
       JSONArray modelsArray = jsonResponse.getJSONArray("data");
 
-      models =
-          modelsArray.toList().stream()
-              .map(model -> ((Map<String, Object>) model).get("id").toString())
-              .collect(Collectors.toList());
+      // Convert JSONArray to List manually to avoid compatibility issues
+      for (int i = 0; i < modelsArray.length(); i++) {
+        JSONObject model = modelsArray.getJSONObject(i);
+        models.add(model.getString("id"));
+      }
     } catch (Exception e) {
       logger.warn(
           "Error retrieving models from LM Studio API standard endpoint, trying v0 endpoint", e);
 
       try {
         // Try alternative endpoint
-        url = "http://localhost:1234/api/v0/models";
+        url = baseUrl + "/api/v0/models";
         String response =
             restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
         JSONObject jsonResponse = new JSONObject(response);
         JSONArray modelsArray = jsonResponse.getJSONArray("data");
 
-        models =
-            modelsArray.toList().stream()
-                .map(model -> ((Map<String, Object>) model).get("id").toString())
-                .collect(Collectors.toList());
+        // Convert JSONArray to List manually to avoid compatibility issues
+        for (int i = 0; i < modelsArray.length(); i++) {
+          JSONObject model = modelsArray.getJSONObject(i);
+          models.add(model.getString("id"));
+        }
       } catch (Exception alternativeError) {
         logger.error("Error retrieving models from LM Studio API", alternativeError);
         // Add a placeholder model so the UI doesn't break
