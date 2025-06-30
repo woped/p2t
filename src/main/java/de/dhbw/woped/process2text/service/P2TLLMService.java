@@ -11,6 +11,8 @@ import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import de.dhbw.woped.process2text.controller.P2TController;
 import de.dhbw.woped.process2text.model.process.OpenAiApiDTO;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -84,8 +86,16 @@ public class P2TLLMService {
    */
   private String createCallOpenAi(String body, OpenAiApiDTO dto) {
 
+    if (dto.getApiKey() == null || dto.getApiKey().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OpenAI API key is missing.");
+        }
+        if (dto.getGptModel() == null || dto.getGptModel().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OpenAI GPT model is missing.");
+        }
+
     String url = System.getProperty("openai.api.url", "https://api.openai.com/v1");
 
+    try {
     OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(dto.getApiKey()).baseUrl(url).build();
 
     ChatCompletionCreateParams createParams =
@@ -105,6 +115,11 @@ public class P2TLLMService {
     logger.info("Raw OpenAI API response: {}", response);
 
     return response;
+
+    }  catch (Exception e) {
+            logger.error("An unexpected error occurred during OpenAI API call: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error calling OpenAI API.", e);
+        }
   }
 
   /*
@@ -116,7 +131,17 @@ public class P2TLLMService {
    */
   private String createCallGemini(String body, OpenAiApiDTO dto) {
 
+    if (dto.getApiKey() == null || dto.getApiKey().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gemini API key is missing.");
+        }
+        if (dto.getGptModel() == null || dto.getGptModel().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gemini model is missing.");
+        }
+
     String url = System.getProperty("gemini.api.url", "https://generativelanguage.googleapis.com");
+
+      
+    try {
 
     Client.setDefaultBaseUrls(Optional.of(url), Optional.empty());
 
@@ -140,7 +165,18 @@ public class P2TLLMService {
     GenerateContentResponse response =
         client.models.generateContent(dto.getGptModel(), chatMessages, config);
 
+        if (response == null || response.text() == null || response.text().isEmpty()) {
+                logger.warn("Gemini API response was empty or malformed for request with model: {}", dto.getGptModel());
+                throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Gemini API returned an empty or malformed response.");
+            }
+
     return response.text();
+
+    } catch (Exception e) {
+            logger.error("An unexpected error occurred during Gemini API call: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error calling Gemini API.", e);
+        }
+
   }
 
   /**
@@ -290,6 +326,12 @@ public class P2TLLMService {
    * @return A list of model names as strings.
    */
   public List<String> getGptModels(String apiKey) {
+
+
+    if (apiKey == null || apiKey.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OpenAI API key is missing.");
+        }
+
     String url = System.getProperty("openai.api.url", "https://api.openai.com/v1/models");
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
@@ -319,7 +361,10 @@ public class P2TLLMService {
     } catch (JSONException e) {
       logger.error("Error parsing OpenAI API response", e);
       throw new RuntimeException("Error parsing OpenAI API response", e);
-    }
+    } catch (Exception e) {
+            logger.error("An unexpected error occurred while retrieving models from OpenAI API: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error retrieving models from OpenAI API.", e);
+      }
   }
 
   /**
@@ -329,6 +374,12 @@ public class P2TLLMService {
    * @return A list of model names as strings.
    */
   public List<String> getGeminiModels(String apiKey) {
+    
+    if (apiKey == null || apiKey.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gemini API key is missing.");
+        }
+    
+    
     String baseUrl =
         System.getProperty(
             "gemini.api.url", "https://generativelanguage.googleapis.com/v1beta/models");
@@ -361,7 +412,10 @@ public class P2TLLMService {
     } catch (JSONException e) {
       logger.error("Error parsing Gemini API response", e);
       throw new RuntimeException("Error parsing Gemini API response", e);
-    }
+    } catch (Exception e) {
+            logger.error("An unexpected error occurred while retrieving models from Gemini API: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error retrieving models from Gemini API.", e);
+        }
   }
 
   /**
