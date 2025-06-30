@@ -124,6 +124,8 @@ Working with BPMN or PNML files often involves handling unexpectedly large file 
    - Choose a model to download or import an already downloaded model.
       <br>
       <img src="docs/images/Bildschirmfoto%202025-06-27%20um%2011.26.43.png" alt="LM Studio Model Selection" width="400"/>
+   - WoPeD should work with most models from LM Studio. The following 4 models have been extensively tested and can be recommended: `llama-3.2-1b-instruct`, `mistral-7b-instruct`, `meta-llama-3.1-8b-instruct`, and `gemma-2-9b-it`. For a detailed comparison of these models, please see the [Model Comparison](docs/pdf/Vergleich%20Modelle%20LM%20Studio.pdf).
+
    - Ensure the context length is set correctly, 10 000 tokens suits most cases, then load the model.
       <br>
       <img src="docs/images/Bildschirmfoto%202025-06-27%20um%2011.21.19.png" alt="LM Studio Model Download" width="400"/>
