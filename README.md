@@ -96,6 +96,17 @@ the folder `lib`. The chosen procedure was described in this [SO answer](https:/
 To check the formatting of all Java files, run `mvn spotless:check`. <br>
 If formatting are identified, run `mvn spotless:apply` to automatically reformat that affected files.
 
+# Recommended High-Resource-Models
+Working with BPMN or PNML files often involves handling unexpectedly large file sizes. Due to the limited context length of many language models, we recommend choosing a model with sufficient context length to ensure reliable and complete processing.
+
+## OpenAI
+  - GPT-4 Turbo (128k context)
+  - GPT-4 (8k or 32k context)
+  - GPT-3.5 Turbo (16k context)
+
+## Gemini
+  - Gemini 1.5 Pro (1M+ context)
+
 # LM Studio Integration
 
 ## LM Studio Setup
