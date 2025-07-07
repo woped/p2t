@@ -16,7 +16,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -71,6 +76,8 @@ public class P2TController {
    * @param apiKey The API key for OpenAI.
    * @param prompt The prompt to guide the translation.
    * @param gptModel The GPT model to be used for translation.
+   * @param provider The provider to use (e.g., "openAi", "lmStudio").
+   * @param useRag Whether to use RAG (Retrieval-Augmented Generation) to enrich the prompt.
    * @return The translated text.
    */
   @ApiOperation(
@@ -86,10 +93,12 @@ public class P2TController {
       @RequestParam(required = true) String provider,
       @RequestParam(required = true) boolean useRag) {
     logger.debug(
-        "Received request with apiKey: {}, prompt: {}, gptModel: {}, body: {}",
+        "Received request with apiKey: {}, prompt: {}, gptModel: {}, provider: {}, useRag: {}, body: {}",
         apiKey,
         prompt,
         gptModel,
+        provider,
+        useRag,
         body.replaceAll("[\n\r\t]", "_"));
 
     String enrichedPrompt = prompt;
@@ -100,22 +109,25 @@ public class P2TController {
         // JSON body for the RAG service
         org.json.JSONObject requestJson = new org.json.JSONObject();
         requestJson.put("prompt", prompt);
-        requestJson.put("question", body);
+        requestJson.put("diagram", body);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(requestJson.toString(), headers);
 
         // POST to the RAG service
+        String ragServiceUrl = System.getProperty("rag.service.url", "http://localhost:5000");
         ResponseEntity<String> ragResponse =
-            restTemplate.postForEntity("http://localhost:5000/rag/enrich", entity, String.class);
+            restTemplate.postForEntity(ragServiceUrl + "/rag/enrich", entity, String.class);
 
         // Expected: {"enriched_prompt": "..."}
         org.json.JSONObject responseJson = new org.json.JSONObject(ragResponse.getBody());
         enrichedPrompt = responseJson.getString("enriched_prompt");
+        logger.info("RAG service enriched prompt successfully. Original length: {}, Enriched length: {}", 
+                   prompt.length(), enrichedPrompt.length());
+        logger.debug("Enriched prompt: {}", enrichedPrompt);
       } catch (Exception e) {
-        logger.error("Error calling RAG service", e);
-        // Optional: fallback to original prompt
+        logger.error("Error calling RAG service, falling back to original prompt", e);
       }
     }
 
@@ -124,11 +136,6 @@ public class P2TController {
 
       openAiApiDTO = new OpenAiApiDTO(null, gptModel, enrichedPrompt, provider, useRag);
     } else {
-
-      //   if (apiKey == null || apiKey.isEmpty()) {
-      //     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "API key is required for
-      // OpenAI");
-      // }
       openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, enrichedPrompt, provider, useRag);
     }
 

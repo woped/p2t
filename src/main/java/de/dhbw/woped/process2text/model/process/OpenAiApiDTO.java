@@ -41,4 +41,20 @@ public class OpenAiApiDTO {
   public void setPrompt(String prompt) {
     this.prompt = prompt;
   }
+
+  public String getProvider() {
+    return provider;
+  }
+
+  public void setProvider(String provider) {
+    this.provider = provider;
+  }
+
+  public boolean isUseRAG() {
+    return useRAG;
+  }
+
+  public void setUseRAG(boolean useRAG) {
+    this.useRAG = useRAG;
+  }
 }
