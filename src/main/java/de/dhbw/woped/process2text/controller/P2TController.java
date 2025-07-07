@@ -71,6 +71,8 @@ public class P2TController {
    * @param apiKey The API key for OpenAI.
    * @param prompt The prompt to guide the translation.
    * @param gptModel The GPT model to be used for translation.
+   * @param provider The provider to use (e.g., "openAi", "lmStudio").
+   * @param useRag Whether to use RAG (Retrieval-Augmented Generation) to enrich the prompt.
    * @return The translated text.
    */
   @ApiOperation(
@@ -86,10 +88,12 @@ public class P2TController {
       @RequestParam(required = true) String provider,
       @RequestParam(required = true) boolean useRag) {
     logger.debug(
-        "Received request with apiKey: {}, prompt: {}, gptModel: {}, body: {}",
+        "Received request with apiKey: {}, prompt: {}, gptModel: {}, provider: {}, useRag: {}, body: {}",
         apiKey,
         prompt,
         gptModel,
+        provider,
+        useRag,
         body.replaceAll("[\n\r\t]", "_"));
 
     String enrichedPrompt = prompt;
@@ -127,11 +131,6 @@ public class P2TController {
 
       openAiApiDTO = new OpenAiApiDTO(null, gptModel, enrichedPrompt, provider, useRag);
     } else {
-
-      //   if (apiKey == null || apiKey.isEmpty()) {
-      //     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "API key is required for
-      // OpenAI");
-      // }
       openAiApiDTO = new OpenAiApiDTO(apiKey, gptModel, enrichedPrompt, provider, useRag);
     }
 
