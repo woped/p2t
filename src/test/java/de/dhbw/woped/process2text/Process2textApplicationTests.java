@@ -21,10 +21,9 @@ import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SuppressWarnings("checkstyle:MagicNumber")
 @EnableWireMock({
-    // CHECKSTYLE:OFF: MagicNumber
     @ConfigureWireMock(name = "rag-service", port = 5000)
-    // CHECKSTYLE:ON: MagicNumber
 })
 class Process2textApplicationTests {
 
