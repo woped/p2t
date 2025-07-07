@@ -107,15 +107,18 @@ public class P2TController {
         HttpEntity<String> entity = new HttpEntity<>(requestJson.toString(), headers);
 
         // POST to the RAG service
+        String ragServiceUrl = System.getProperty("rag.service.url", "http://localhost:5000");
         ResponseEntity<String> ragResponse =
-            restTemplate.postForEntity("http://localhost:5000/rag/enrich", entity, String.class);
+            restTemplate.postForEntity(ragServiceUrl + "/rag/enrich", entity, String.class);
 
         // Expected: {"enriched_prompt": "..."}
         org.json.JSONObject responseJson = new org.json.JSONObject(ragResponse.getBody());
         enrichedPrompt = responseJson.getString("enriched_prompt");
+        logger.info("RAG service enriched prompt successfully. Original length: {}, Enriched length: {}", 
+                   prompt.length(), enrichedPrompt.length());
+        logger.debug("Enriched prompt: {}", enrichedPrompt);
       } catch (Exception e) {
-        logger.error("Error calling RAG service", e);
-        // Optional: fallback to original prompt
+        logger.error("Error calling RAG service, falling back to original prompt", e);
       }
     }
 
