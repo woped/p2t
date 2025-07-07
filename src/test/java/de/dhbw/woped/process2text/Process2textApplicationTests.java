@@ -46,7 +46,7 @@ class Process2textApplicationTests {
             .withHeader("Content-Type", equalTo("application/json"))
             .willReturn(
                 aResponse()
-                    .withStatus(200)
+                    .withStatus(HTTP_OK)
                     .withHeader("Content-Type", "application/json")
                     .withBody("{\"enriched_prompt\":\"Enhanced prompt with RAG context\"}")));
 
