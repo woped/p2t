@@ -26,6 +26,9 @@ import org.wiremock.spring.EnableWireMock;
 })
 class Process2textApplicationTests {
 
+  private static final int RAG_SERVICE_PORT = 5000;
+  private static final int HTTP_OK = 200;
+
   @LocalServerPort
   private int port;
 
@@ -54,7 +57,7 @@ class Process2textApplicationTests {
         + "</bpmn2:definitions>";
 
     // Set system property for RAG service URL
-    System.setProperty("rag.service.url", "http://localhost:5000");
+    System.setProperty("rag.service.url", "http://localhost:" + RAG_SERVICE_PORT);
 
     // Set HTTP headers
     HttpHeaders headers = new HttpHeaders();
@@ -101,7 +104,7 @@ class Process2textApplicationTests {
             .withHeader("Content-Type", equalTo("application/json"))
             .willReturn(
                 aResponse()
-                    .withStatus(200)
+                    .withStatus(HTTP_OK)
                     .withHeader("Content-Type", "application/json")
                     .withBody("{\"enriched_prompt\":\"This should not be called\"}")));
 
